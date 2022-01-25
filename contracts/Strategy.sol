@@ -387,7 +387,9 @@ contract Strategy is BaseStrategy {
         } else {
             //serious loss should never happen but if it does lets record it accurately
             _loss = debt - total;
-            uint256 amountToFree = _loss.add(_debtPayment);
+
+            //we can only free up what we have. if loss is higher than our real assets withdraw less
+            uint256 amountToFree = Math.min(_debtPayment, total);
 
             if (amountToFree > 0 && looseAssets < amountToFree) {
                 //withdraw what we can withdraw
@@ -395,15 +397,7 @@ contract Strategy is BaseStrategy {
                 _withdrawSome(amountToFree.sub(looseAssets));
                 uint256 newLoose = want.balanceOf(address(this));
 
-                //if we dont have enough money adjust _debtOutstanding and only change profit if needed
-                if (newLoose < amountToFree) {
-                    if (_loss > newLoose) {
-                        _loss = newLoose;
-                        _debtPayment = 0;
-                    } else {
-                        _debtPayment = Math.min(newLoose - _loss, _debtPayment);
-                    }
-                }
+                _debtPayment = Math.min(newLoose, amountToFree);
             }
         }
     }
@@ -599,6 +593,9 @@ contract Strategy is BaseStrategy {
     function prepareMigration(address _newStrategy) internal override {
         uint256 outstanding = vault.strategies(address(this)).totalDebt;
         (, uint256 loss, uint256 wantBalance) = prepareReturn(outstanding);
+
+        //it is better to use debtThreshold 0 plus addNewStrategy instead of migrate for GenLender
+        require(outstanding <= want.balanceOf(address(this).add(withdrawalThreshold)), "LIQUIDITY CRUNCH");
     }
 
     function protectedTokens() internal view override returns (address[] memory) {

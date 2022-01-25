@@ -143,6 +143,7 @@ def test_scream_up_down(
     whale_deposit = 1_000_000 * (10 ** (decimals))
     vault.deposit(whale_deposit, {"from": whale})
 
+    chain.mine(10)
     strategy.harvest({"from": strategist})
    
     status = strategy.lendStatuses()
@@ -184,7 +185,6 @@ def test_scream_up_down(
     vault.updateStrategyDebtRatio(strategy, 10_000, {"from": gov})
     strategy.harvest({"from": strategist})
 
-    strategy.harvest({"from": strategist})
     status = strategy.lendStatuses()
     for j in status:
         print(

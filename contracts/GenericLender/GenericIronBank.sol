@@ -102,7 +102,6 @@ contract GenericIronBank is GenericLenderBase {
         useSpirit = _useSpirit;
     }
 
-    //adjust dust threshol
     function setIgnorePrinting(bool _ignorePrinting) external management {
         ignorePrinting = _ignorePrinting;
     }
@@ -370,6 +369,10 @@ contract GenericIronBank is GenericLenderBase {
     }
 
     function protectedTokens() internal view override returns (address[] memory) {
-
+        address[] memory protected = new address[](3);
+        protected[0] = address(want);
+        protected[1] = address(cToken);
+        protected[2] = address(ib);
+        return protected;
     }
 }

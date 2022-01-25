@@ -79,7 +79,10 @@ contract GenericScream is GenericLenderBase {
         dustThreshold = amount;
     }
 
-    //adjust dust threshol
+    function setMinScreamToSellThreshold(uint256 amount) external management {
+        minScreamToSell = amount;
+    }
+
     function setIgnorePrinting(bool _ignorePrinting) external management {
         ignorePrinting = _ignorePrinting;
     }
@@ -113,6 +116,10 @@ contract GenericScream is GenericLenderBase {
     }
 
     function compBlockShareInWant(uint256 change, bool add) public view returns (uint256){
+        
+        if(ignorePrinting){
+            return 0;
+        }
         //comp speed is amount to borrow or deposit (so half the total distribution for want)
         uint256 distributionPerBlock = ComptrollerI(unitroller).compSpeeds(address(cToken));
 
@@ -216,6 +223,13 @@ contract GenericScream is GenericLenderBase {
         return looseBalance;
     }
 
+    function manualClaimAndDontSell() external management{
+        CTokenI[] memory tokens = new CTokenI[](1);
+        tokens[0] = cToken;
+
+        ComptrollerI(unitroller).claimComp(address(this), tokens);
+    }
+
     function _disposeOfComp() internal {
 
         CTokenI[] memory tokens = new CTokenI[](1);
@@ -315,7 +329,7 @@ contract GenericScream is GenericLenderBase {
         address[] memory protected = new address[](3);
         protected[0] = address(want);
         protected[1] = address(cToken);
-        protected[2] = scream;
+        protected[2] = address(scream);
         return protected;
     }
 }

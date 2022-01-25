@@ -595,7 +595,7 @@ contract Strategy is BaseStrategy {
         (, uint256 loss, uint256 wantBalance) = prepareReturn(outstanding);
 
         //it is better to use debtThreshold 0 plus addNewStrategy instead of migrate for GenLender
-        require(outstanding <= want.balanceOf(address(this).add(withdrawalThreshold)), "LIQUIDITY CRUNCH");
+        require(outstanding <= want.balanceOf(address(this)).add(withdrawalThreshold), "LIQUIDITY CRUNCH");
     }
 
     function protectedTokens() internal view override returns (address[] memory) {

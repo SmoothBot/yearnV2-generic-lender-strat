@@ -5,9 +5,9 @@ import random
 import brownie
 
 def test_normal_activity(
-    ftm_dai,
-    scrDai,
-    crDai,
+    token,
+    scrToken,
+    crToken,
     chain,
     whale,
     rando,
@@ -19,7 +19,7 @@ def test_normal_activity(
 ):
     strategist = accounts.at(strategy.strategist(), force=True)
     gov = accounts.at(vault.governance(), force=True)
-    currency = ftm_dai
+    currency = token
     starting_balance = currency.balanceOf(strategist)
 
     currency.approve(vault, 2 ** 256 - 1, {"from": whale})
@@ -28,7 +28,7 @@ def test_normal_activity(
     debt_ratio = 10_000
     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 1000, {"from": gov})
 
-    whale_deposit = 100_000 * 1e18
+    whale_deposit = 200 * 1e18
     vault.deposit(whale_deposit, {"from": whale})
     chain.sleep(10)
     chain.mine(1)
@@ -61,8 +61,8 @@ def test_normal_activity(
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
-        scrDai.mint(0,{"from": whale})
-        crDai.mint(0,{"from": whale})
+        scrToken.mint(0,{"from": whale})
+        crToken.mint(0,{"from": whale})
         strategy.harvest({"from": strategist})
 
         # genericStateOfStrat(strategy, currency, vault)
@@ -98,20 +98,20 @@ def test_normal_activity(
 
 def test_scream_up_down(
     Strategy,
-    scrDai,
+    scrToken,
     GenericScream,
     chain,
     whale,
-    ftm_dai,
+    token,
     strategist,
     vault,
     Contract,
     accounts
 ):
-    currency = ftm_dai
+    currency = token
     gov = accounts.at(vault.governance(), force=True)
     strategy = strategist.deploy(Strategy, vault)
-    screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrDai)
+    screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
     
     strategy.setRewards(strategist, {"from": strategist})
     strategy.setWithdrawalThreshold(0, {"from": strategist})
@@ -140,7 +140,7 @@ def test_scream_up_down(
 
     assert deposit_limit == vault.depositLimit()
  
-    whale_deposit = 1_000_000 * (10 ** (decimals))
+    whale_deposit = 500 * (10 ** (decimals))
     vault.deposit(whale_deposit, {"from": whale})
 
     chain.mine(10)
@@ -154,34 +154,34 @@ def test_scream_up_down(
             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e18)}, APR: {form.format(j[2]/1e18)}"
         )
     chain.mine(20)
-    scrDai.mint(0, {"from": strategist})
+    scrToken.mint(0, {"from": strategist})
 
 
     vault.updateStrategyDebtRatio(strategy, 0, {"from": gov})
     strategy.harvest({"from": strategist})
-    print(scrDai.balanceOf(screamPlugin))
+    print(scrToken.balanceOf(screamPlugin))
     print(screamPlugin.hasAssets())
     chain.mine(20)
-    scrDai.mint(0, {"from": strategist})
+    scrToken.mint(0, {"from": strategist})
     chain.mine(10)
     strategy.harvest({"from": strategist})
     
-    print(scrDai.balanceOf(screamPlugin))
+    print(scrToken.balanceOf(screamPlugin))
     print(screamPlugin.hasAssets())
     chain.mine(20)
-    scrDai.mint(0, {"from": strategist})
+    scrToken.mint(0, {"from": strategist})
 
     chain.mine(10)
     strategy.harvest({"from": strategist})
     print(screamPlugin.hasAssets())
-    print(scrDai.balanceOf(screamPlugin))
+    print(scrToken.balanceOf(screamPlugin))
     status = strategy.lendStatuses()
     for j in status:
         print(
             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e18)}, APR: {form.format(j[2]/1e18)}"
         )
     chain.mine(20)
-    scrDai.mint(0, {"from": strategist})
+    scrToken.mint(0, {"from": strategist})
     vault.updateStrategyDebtRatio(strategy, 10_000, {"from": gov})
     strategy.harvest({"from": strategist})
 

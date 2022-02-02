@@ -3,15 +3,15 @@ from brownie import Wei, config, Contract
 
 @pytest.fixture
 def token(interface):
-    yield interface.ERC20('0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83')
+    yield interface.ERC20('0x04068DA6C83AFCFA0e13ba15A6696662335D5B75')
 
 @pytest.fixture
 def scrToken(interface):
-    yield interface.CErc20I("0x5AA53f03197E08C4851CAD8C92c7922DA5857E5d")
+    yield interface.CErc20I("0xE45Ac34E528907d0A0239ab5Db507688070B20bf")
 
 @pytest.fixture
 def crToken(interface):
-    yield interface.CErc20I("0xd528697008aC67A21818751A5e3c58C8daE54696")
+    yield interface.CErc20I("0x328A7b4d538A2b3942653a9983fdA3C12c571141")
 
 @pytest.fixture
 def gov(accounts):
@@ -19,7 +19,7 @@ def gov(accounts):
 
 @pytest.fixture
 def whale(accounts):
-    yield accounts.at('0x39B3bd37208CBaDE74D0fcBDBb12D606295b430a', True)
+    yield accounts.at('0xe578C856933D8e1082740bf7661e379Aa2A30b26', True)
 
 @pytest.fixture
 def rewards(gov):
@@ -82,7 +82,7 @@ def strategy(
     print(scapr/1e18)
     print((screamPlugin.apr() - scapr)/1e18)
 
-    scapr2 = screamPlugin.compBlockShareInWant(5_000_000 * 1e18, True) * 3154 * 10**4
+    scapr2 = screamPlugin.compBlockShareInWant(5_000_000 * 1e6, True) * 3154 * 10**4
     print(scapr2/1e18)
     assert scapr2 < scapr
     strategy.addLender(screamPlugin, {"from": gov})

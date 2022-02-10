@@ -18,6 +18,11 @@ def crToken(interface):
     yield interface.CErc20I("0x328A7b4d538A2b3942653a9983fdA3C12c571141")
 
 @pytest.fixture
+def hToken(interface):
+    yield interface.CErc20I("0x243E33aa7f6787154a8E59d3C27a66db3F8818ee")
+
+
+@pytest.fixture
 def gov(accounts):
     yield accounts[3]
 
@@ -71,6 +76,7 @@ def strategy(
     vault,
     scrToken,
     crToken,
+    hToken,
     hundredGauge,
     gov,
     Strategy,
@@ -83,7 +89,7 @@ def strategy(
 
     screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
     ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", crToken)
-    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", crToken, hundredGauge)
+    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hundredGauge)
     assert screamPlugin.underlyingBalanceStored() == 0
     scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
     print(scapr/1e18)

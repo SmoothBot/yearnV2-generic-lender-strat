@@ -8,6 +8,7 @@ def test_normal_activity(
     token,
     scrToken,
     crToken,
+    hToken,
     chain,
     whale,
     rando,
@@ -30,7 +31,7 @@ def test_normal_activity(
 
     whale_deposit = 1000000 * 1e6
     vault.deposit(whale_deposit, {"from": whale})
-    chain.sleep(10)
+    chain.sleep(1)
     chain.mine(1)
     strategy.setWithdrawalThreshold(0, {"from": gov})
     assert strategy.harvestTrigger(1 * 1e18) == True
@@ -63,6 +64,7 @@ def test_normal_activity(
         print(f'\n----harvest----')
         scrToken.mint(0,{"from": whale})
         crToken.mint(0,{"from": whale})
+        hToken.mint(0,{"from": whale})
         strategy.harvest({"from": strategist})
 
         # genericStateOfStrat(strategy, currency, vault)
@@ -99,6 +101,7 @@ def test_normal_activity(
 def test_scream_up_down(
     Strategy,
     scrToken,
+    hToken,
     GenericScream,
     chain,
     whale,
@@ -174,6 +177,7 @@ def test_scream_up_down(
     scrToken.mint(0, {"from": strategist})
 
     chain.mine(10)
+    chain.sleep(10)
     strategy.harvest({"from": strategist})
     print(screamPlugin.hasAssets())
     print(scrToken.balanceOf(screamPlugin))
@@ -184,6 +188,8 @@ def test_scream_up_down(
         )
     chain.mine(20)
     scrToken.mint(0, {"from": strategist})
+    hToken.mint(0, {"from": strategist})
+
     vault.updateStrategyDebtRatio(strategy, 10_000, {"from": gov})
     strategy.harvest({"from": strategist})
 

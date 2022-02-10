@@ -10,6 +10,10 @@ def scrToken(interface):
     yield interface.CErc20I("0xE45Ac34E528907d0A0239ab5Db507688070B20bf")
 
 @pytest.fixture
+def hundredGauge(interface):
+    yield "0x110614276F7b9Ae8586a1C1D9Bc079771e2CE8cF"
+    
+@pytest.fixture
 def crToken(interface):
     yield interface.CErc20I("0x328A7b4d538A2b3942653a9983fdA3C12c571141")
 
@@ -67,16 +71,19 @@ def strategy(
     vault,
     scrToken,
     crToken,
+    hundredGauge,
     gov,
     Strategy,
     GenericScream,
-    GenericIronBank
+    GenericIronBank,
+    GenericHundredFinance
 ):
     strategy = strategist.deploy(Strategy, vault)
     strategy.setKeeper(keeper)
 
     screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
     ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", crToken)
+    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", crToken, hundredGauge)
     assert screamPlugin.underlyingBalanceStored() == 0
     scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
     print(scapr/1e18)
@@ -87,5 +94,6 @@ def strategy(
     assert scapr2 < scapr
     strategy.addLender(screamPlugin, {"from": gov})
     strategy.addLender(ibPlugin, {"from": gov})
-    assert strategy.numLenders() == 2
+    strategy.addLender(hndPlugin, {"from": gov})
+    assert strategy.numLenders() == 3
     yield strategy

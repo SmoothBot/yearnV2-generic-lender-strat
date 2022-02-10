@@ -108,18 +108,24 @@ def test_normal_activity(
 
 def test_yfi_hundred(accounts,
     Contract,
-    GenericIronBank,
+    GenericHundredFinance,
     GenericCream):
     gov = accounts.at('0xC0E2830724C946a6748dDFE09753613cd38f6767', force=True)
 
-    hYFI = Contract('0xC0f112479c83a603Ac4Dc76f616536389a85a917')
-    yfi_genlender = Contract('0xDf262B43bea0ACd0dD5832cf2422e0c9b2C539dc')
-    genericCream = Contract('0x5A1cB716a389b8F8658D5d471391E530C3e570AA')
+    hUSDCguage = Contract('0x110614276F7b9Ae8586a1C1D9Bc079771e2CE8cF')
+    hUSDC = Contract('0x243E33aa7f6787154a8E59d3C27a66db3F8818ee')
+    usdc = Contract('0x04068DA6C83AFCFA0e13ba15A6696662335D5B75')
+    usdc_whale = accounts.at('0x93C08a3168fC469F3fC165cd3A471D19a37ca19e', force=True)
+
+    #yfi_genlender = Contract('0xDf262B43bea0ACd0dD5832cf2422e0c9b2C539dc')
+    #genericCream = Contract('0x5A1cB716a389b8F8658D5d471391E530C3e570AA')
 
     #tx = genericCream.cloneCreamLender(yfi_genlender, "Hundred Lender YFI", hYFI, {'from': gov})
     #hPlugin = GenericCream.at(tx.return_value)
-    hPlugin = GenericCream.at('0xF4D1Ab2169eaC23043519cABcf211ec7259dbc7c')
+    #hPlugin = GenericCream.at('0xF4D1Ab2169eaC23043519cABcf211ec7259dbc7c')
     #yfi_genlender.addLender(hPlugin, {'from': gov})
+
+    usdc_hundred_finance = GenericHundredFinance.deploy(strategy, )
 
     yfi_vault = Contract('0x2C850cceD00ce2b14AA9D658b7Cad5dF659493Db')
     

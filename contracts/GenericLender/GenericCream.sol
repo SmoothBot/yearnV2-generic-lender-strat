@@ -62,12 +62,11 @@ contract GenericCream is GenericLenderBase {
 
     function _nav() internal view returns (uint256) {
         uint256 amount = want.balanceOf(address(this)).add(underlyingBalanceStored());
-        if(amount < dustThreshold){
+        if (amount < dustThreshold) {
             return 0;
-        }else{
+        } else {
             return amount;
         }
-        
     }
 
     function underlyingBalanceStored() public view returns (uint256 balance) {
@@ -80,7 +79,7 @@ contract GenericCream is GenericLenderBase {
         }
     }
 
-    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance){
+    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance) {
         if (amountOfUnderlying == 0) {
             balance = 0;
         } else {
@@ -126,7 +125,7 @@ contract GenericCream is GenericLenderBase {
 
         if (amount.add(dustThreshold) >= total) {
             //cant withdraw more than we own. so withdraw all we can
-            if(balanceUnderlying > dustThreshold){
+            if (balanceUnderlying > dustThreshold) {
                 require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "ctoken: redeemAll fail");
             }
             looseBalance = want.balanceOf(address(this));
@@ -150,7 +149,6 @@ contract GenericCream is GenericLenderBase {
                 toWithdraw = liquidity;
             }
             require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
-            
         }
         looseBalance = want.balanceOf(address(this));
         want.safeTransfer(address(strategy), looseBalance);
@@ -169,8 +167,8 @@ contract GenericCream is GenericLenderBase {
         uint256 amountInCtokens = cToken.balanceOf(address(this));
 
         if (liquidityInCTokens > 2) {
-            liquidityInCTokens = liquidityInCTokens-1;
-           
+            liquidityInCTokens = liquidityInCTokens - 1;
+
             if (amountInCtokens <= liquidityInCTokens) {
                 //we can take all
                 all = true;

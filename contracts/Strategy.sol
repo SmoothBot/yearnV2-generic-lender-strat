@@ -528,9 +528,8 @@ contract Strategy is BaseStrategy {
         }
     }
 
-    function ethToWant(uint256 _amount) public override view returns (uint256) {
-        if (address(want) == weth)
-            return _amount;
+    function ethToWant(uint256 _amount) public view override returns (uint256) {
+        if (address(want) == weth) return _amount;
 
         address[] memory path = new address[](2);
         path[0] = weth;

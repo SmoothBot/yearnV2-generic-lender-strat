@@ -14,9 +14,24 @@ import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 
 import "./GenericLenderBase.sol";
 
-interface iLiquidityMining{
-    function claimRewards(address[] memory holders, address[] memory cTokens, address[] memory rewards, bool borrowers, bool suppliers) external;
-    function rewardSupplySpeeds(address, address) external view returns (uint256, uint256, uint256);
+interface iLiquidityMining {
+    function claimRewards(
+        address[] memory holders,
+        address[] memory cTokens,
+        address[] memory rewards,
+        bool borrowers,
+        bool suppliers
+    ) external;
+
+    function rewardSupplySpeeds(address, address)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        );
+
     function rewardTokensMap(address) external view returns (bool);
 }
 
@@ -109,9 +124,9 @@ contract GenericIronBank is GenericLenderBase {
     function _nav() internal view returns (uint256) {
         uint256 amount = want.balanceOf(address(this)).add(underlyingBalanceStored());
 
-        if(amount < dustThreshold){
+        if (amount < dustThreshold) {
             return 0;
-        }else{
+        } else {
             return amount;
         }
     }
@@ -134,42 +149,44 @@ contract GenericIronBank is GenericLenderBase {
         return (cToken.supplyRatePerBlock().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
     }
 
-    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256){
-
-        if(ignorePrinting){
+    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
+        if (ignorePrinting) {
             return 0;
         }
         //comp speed is amount to borrow or deposit (so half the total distribution for want)
         //uint256 distributionPerBlock = ComptrollerI(unitroller).compSpeeds(address(cToken));
-        (uint distributionPerBlock, , uint supplyEnd) = liquidityMining.rewardSupplySpeeds(ib, address(cToken));
-        if(supplyEnd < block.timestamp){
+        (uint256 distributionPerBlock, , uint256 supplyEnd) = liquidityMining.rewardSupplySpeeds(ib, address(cToken));
+        if (supplyEnd < block.timestamp) {
             return 0;
         }
         //convert to per dolla
         uint256 totalSupply = cToken.totalSupply().mul(cToken.exchangeRateStored()).div(1e18);
-        if(add){
+        if (add) {
             totalSupply = totalSupply.add(change);
-        }else{
+        } else {
             totalSupply = totalSupply.sub(change);
         }
 
         uint256 blockShareSupply = 0;
-        if(totalSupply > 0){
+        if (totalSupply > 0) {
             blockShareSupply = distributionPerBlock.mul(1e18).div(totalSupply);
         }
 
-        uint256 estimatedWant =  priceCheck(ib, address(want),blockShareSupply);
+        uint256 estimatedWant = priceCheck(ib, address(want), blockShareSupply);
         uint256 compRate;
-        if(estimatedWant != 0){
+        if (estimatedWant != 0) {
             compRate = estimatedWant.mul(9).div(10); //10% pessimist
-
         }
 
-        return(compRate);
+        return (compRate);
     }
 
     //WARNING. manipulatable and simple routing. Only use for safe functions
-    function priceCheck(address start, address end, uint256 _amount) public view returns (uint256) {
+    function priceCheck(
+        address start,
+        address end,
+        uint256 _amount
+    ) public view returns (uint256) {
         if (_amount == 0) {
             return 0;
         }
@@ -204,17 +221,16 @@ contract GenericIronBank is GenericLenderBase {
 
         if (amount.add(dustThreshold) >= total) {
             //cant withdraw more than we own. so withdraw all we can
-            if(balanceUnderlying > dustThreshold){
+            if (balanceUnderlying > dustThreshold) {
                 require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "ctoken: redeemAll fail");
             }
             looseBalance = want.balanceOf(address(this));
-            if(looseBalance > 0 ){
+            if (looseBalance > 0) {
                 want.safeTransfer(address(strategy), looseBalance);
                 return looseBalance;
-            }else{
+            } else {
                 return 0;
             }
-
         }
 
         if (looseBalance >= amount) {
@@ -231,21 +247,20 @@ contract GenericIronBank is GenericLenderBase {
             if (toWithdraw > liquidity) {
                 toWithdraw = liquidity;
             }
-            if(toWithdraw > dustThreshold){
+            if (toWithdraw > dustThreshold) {
                 require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
             }
-
         }
-        if(!ignorePrinting){
+        if (!ignorePrinting) {
             _disposeOfComp();
         }
-        
+
         looseBalance = want.balanceOf(address(this));
         want.safeTransfer(address(strategy), looseBalance);
         return looseBalance;
     }
 
-    function manualClaimAndDontSell() external management{
+    function manualClaimAndDontSell() external management {
         address[] memory holders = new address[](1);
         holders[0] = address(this);
         address[] memory tokens = new address[](1);
@@ -257,8 +272,7 @@ contract GenericIronBank is GenericLenderBase {
     }
 
     function _disposeOfComp() internal {
-
-        if(liquidityMining.rewardTokensMap(ib)){
+        if (liquidityMining.rewardTokensMap(ib)) {
             address[] memory holders = new address[](1);
             holders[0] = address(this);
             address[] memory tokens = new address[](1);
@@ -268,15 +282,14 @@ contract GenericIronBank is GenericLenderBase {
 
             liquidityMining.claimRewards(holders, tokens, rewards, false, true);
         }
-        
 
         uint256 _ib = IERC20(ib).balanceOf(address(this));
 
-        if (_ib > minIbToSell) { 
-            if(!useSpirit){
+        if (_ib > minIbToSell) {
+            if (!useSpirit) {
                 address[] memory path = getTokenOutPath(ib, address(want));
                 IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
-            }else{
+            } else {
                 address[] memory path = getTokenOutPath(ib, wftm);
                 IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
 
@@ -284,7 +297,6 @@ contract GenericIronBank is GenericLenderBase {
                 uint256 _wftm = IERC20(wftm).balanceOf(address(this));
                 IUniswapV2Router02(spiritRouter).swapExactTokensForTokens(_wftm, uint256(0), path, address(this), now);
             }
-            
         }
     }
 
@@ -313,7 +325,7 @@ contract GenericIronBank is GenericLenderBase {
         bool all;
 
         if (liquidityInCTokens > 2) {
-            liquidityInCTokens = liquidityInCTokens-1;
+            liquidityInCTokens = liquidityInCTokens - 1;
 
             if (amountInCtokens <= liquidityInCTokens) {
                 //we can take all
@@ -330,14 +342,13 @@ contract GenericIronBank is GenericLenderBase {
         }
 
         uint256 looseBalance = want.balanceOf(address(this));
-        if(looseBalance > 0){
+        if (looseBalance > 0) {
             want.safeTransfer(address(strategy), looseBalance);
         }
         return all;
-        
     }
 
-    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance){
+    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance) {
         if (amountOfUnderlying == 0) {
             balance = 0;
         } else {

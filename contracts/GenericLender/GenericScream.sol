@@ -90,9 +90,9 @@ contract GenericScream is GenericLenderBase {
     function _nav() internal view returns (uint256) {
         uint256 amount = want.balanceOf(address(this)).add(underlyingBalanceStored());
 
-        if(amount < dustThreshold){
+        if (amount < dustThreshold) {
             return 0;
-        }else{
+        } else {
             return amount;
         }
     }
@@ -115,9 +115,8 @@ contract GenericScream is GenericLenderBase {
         return (cToken.supplyRatePerBlock().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
     }
 
-    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256){
-        
-        if(ignorePrinting){
+    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
+        if (ignorePrinting) {
             return 0;
         }
         //comp speed is amount to borrow or deposit (so half the total distribution for want)
@@ -125,29 +124,32 @@ contract GenericScream is GenericLenderBase {
 
         //convert to per dolla
         uint256 totalSupply = cToken.totalSupply().mul(cToken.exchangeRateStored()).div(1e18);
-        if(add){
+        if (add) {
             totalSupply = totalSupply.add(change);
-        }else{
+        } else {
             totalSupply = totalSupply.sub(change);
         }
 
         uint256 blockShareSupply = 0;
-        if(totalSupply > 0){
+        if (totalSupply > 0) {
             blockShareSupply = distributionPerBlock.mul(1e18).div(totalSupply);
         }
 
-        uint256 estimatedWant =  priceCheck(scream, address(want),blockShareSupply);
+        uint256 estimatedWant = priceCheck(scream, address(want), blockShareSupply);
         uint256 compRate;
-        if(estimatedWant != 0){
+        if (estimatedWant != 0) {
             compRate = estimatedWant.mul(9).div(10); //10% pessimist
-
         }
 
-        return(compRate);
+        return (compRate);
     }
 
     //WARNING. manipulatable and simple routing. Only use for safe functions
-    function priceCheck(address start, address end, uint256 _amount) public view returns (uint256) {
+    function priceCheck(
+        address start,
+        address end,
+        uint256 _amount
+    ) public view returns (uint256) {
         if (_amount == 0) {
             return 0;
         }
@@ -182,17 +184,16 @@ contract GenericScream is GenericLenderBase {
 
         if (amount.add(dustThreshold) >= total) {
             //cant withdraw more than we own. so withdraw all we can
-            if(balanceUnderlying > dustThreshold){
+            if (balanceUnderlying > dustThreshold) {
                 require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "ctoken: redeemAll fail");
             }
             looseBalance = want.balanceOf(address(this));
-            if(looseBalance > 0 ){
+            if (looseBalance > 0) {
                 want.safeTransfer(address(strategy), looseBalance);
                 return looseBalance;
-            }else{
+            } else {
                 return 0;
             }
-
         }
 
         if (looseBalance >= amount) {
@@ -209,21 +210,20 @@ contract GenericScream is GenericLenderBase {
             if (toWithdraw > liquidity) {
                 toWithdraw = liquidity;
             }
-            if(toWithdraw > dustThreshold){
+            if (toWithdraw > dustThreshold) {
                 require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
             }
-
         }
-        if(!ignorePrinting){
+        if (!ignorePrinting) {
             _disposeOfComp();
         }
-        
+
         looseBalance = want.balanceOf(address(this));
         want.safeTransfer(address(strategy), looseBalance);
         return looseBalance;
     }
 
-    function manualClaimAndDontSell() external management{
+    function manualClaimAndDontSell() external management {
         CTokenI[] memory tokens = new CTokenI[](1);
         tokens[0] = cToken;
 
@@ -231,7 +231,6 @@ contract GenericScream is GenericLenderBase {
     }
 
     function _disposeOfComp() internal {
-
         CTokenI[] memory tokens = new CTokenI[](1);
         tokens[0] = cToken;
 
@@ -270,7 +269,7 @@ contract GenericScream is GenericLenderBase {
         bool all;
 
         if (liquidityInCTokens > 2) {
-            liquidityInCTokens = liquidityInCTokens-1;
+            liquidityInCTokens = liquidityInCTokens - 1;
 
             if (amountInCtokens <= liquidityInCTokens) {
                 //we can take all
@@ -287,14 +286,13 @@ contract GenericScream is GenericLenderBase {
         }
 
         uint256 looseBalance = want.balanceOf(address(this));
-        if(looseBalance > 0){
+        if (looseBalance > 0) {
             want.safeTransfer(address(strategy), looseBalance);
         }
         return all;
-        
     }
 
-    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance){
+    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance) {
         if (amountOfUnderlying == 0) {
             balance = 0;
         } else {

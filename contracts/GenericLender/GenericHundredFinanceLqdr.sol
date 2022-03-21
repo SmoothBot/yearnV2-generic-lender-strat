@@ -348,24 +348,23 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
 
     //spookyswap is best for hnd/wftm. we check if there is a better path for the second lot
     function _disposeOfComp() internal {
-        if (minter != address(0)) {
-            claim();
-            uint256 _ib = IERC20(lqdr).balanceOf(address(this));
+        claim();
+        uint256 _ib = IERC20(lqdr).balanceOf(address(this));
 
-            if (_ib > minIbToSell) {
-                if (!useSpirit) {
-                    address[] memory path = getTokenOutPath(lqdr, address(want));
-                    IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
-                } else {
-                    address[] memory path = getTokenOutPath(lqdr, wftm);
-                    IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
+        if (_ib > minIbToSell) {
+            if (!useSpirit) {
+                address[] memory path = getTokenOutPath(lqdr, address(want));
+                IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
+            } else {
+                address[] memory path = getTokenOutPath(lqdr, wftm);
+                IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
 
-                    path = getTokenOutPath(wftm, address(want));
-                    uint256 _wftm = IERC20(wftm).balanceOf(address(this));
-                    IUniswapV2Router02(spiritRouter).swapExactTokensForTokens(_wftm, uint256(0), path, address(this), now);
-                }
+                path = getTokenOutPath(wftm, address(want));
+                uint256 _wftm = IERC20(wftm).balanceOf(address(this));
+                IUniswapV2Router02(spiritRouter).swapExactTokensForTokens(_wftm, uint256(0), path, address(this), now);
             }
         }
+        
     }
 
     function getTokenOutPath(address _token_in, address _token_out) internal pure returns (address[] memory _path) {

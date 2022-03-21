@@ -69,6 +69,8 @@ def live_strategy(
     yield Strategy.at('0x754133e0f67CB51263d6d5F41f2dF1a58a9D36b7')
 
 
+lqdrPID = 0
+
 @pytest.fixture
 def strategy(
     strategist,
@@ -82,14 +84,17 @@ def strategy(
     Strategy,
     GenericScream,
     GenericIronBank,
-    GenericHundredFinance
+    GenericHundredFinance,
+    GenericHundredFinanceLqdr
+    
 ):
     strategy = strategist.deploy(Strategy, vault)
     strategy.setKeeper(keeper)
-
+    
     screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
     ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", crToken)
     hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hundredGauge)
+    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance", hToken, lqdrPID)
     assert screamPlugin.underlyingBalanceStored() == 0
     scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
     print(scapr/1e18)
@@ -101,5 +106,7 @@ def strategy(
     strategy.addLender(screamPlugin, {"from": gov})
     strategy.addLender(ibPlugin, {"from": gov})
     strategy.addLender(hndPlugin, {"from": gov})
-    assert strategy.numLenders() == 3
+    strategy.addLender(hndLQDRPlugin, {"from": gov})
+
+    assert strategy.numLenders() == 4
     yield strategy

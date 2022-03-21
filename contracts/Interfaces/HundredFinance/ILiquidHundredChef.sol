@@ -48,6 +48,7 @@ interface  ILiquidHundredChef {
     // mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     function userInfo(uint256 _pid, address _user) external view returns (UserInfo calldata);
 
+    function tokenPerSecond() external view returns (uint256);
 
     /// @dev Tokens added
     // mapping(address => bool) public addedTokens;

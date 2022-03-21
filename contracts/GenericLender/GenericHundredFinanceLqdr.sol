@@ -81,7 +81,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     uint256 private constant blocksPerYear = 60 * 60 * 24 * 365;
     address public constant spookyRouter = address(0xF491e7B69E4244ad4002BC14e878a34207E38c29);
     address public constant spiritRouter = address(0x16327E3FbDaCA3bcF7E38F5Af2599D2DDc33aE52);
-    address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
+    address public constant lqdr = address(0x10b620b2dbAC4Faa7D7FFD71Da486f5D44cd86f9);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
     
     ILiquidHundredChef public constant CHEF = ILiquidHundredChef(0x9A07fB107b9d8eA8B82ECF453Efb7cFb85A66Ce9);
@@ -130,7 +130,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         want.safeApprove(_cToken, uint256(-1));
         cToken.approve(address(CHEF), uint256(-1));
 
-        IERC20(hnd).safeApprove(spookyRouter, uint256(-1));
+        IERC20(lqdr).safeApprove(spookyRouter, uint256(-1));
         IERC20(wftm).safeApprove(spiritRouter, uint256(-1));
         dustThreshold = 1_000_000_000; //depends on want
     }
@@ -193,47 +193,29 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        // return (cToken.supplyRatePerBlock().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
-        return cToken.supplyRatePerBlock();
+        return (cToken.supplyRatePerBlock().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
     }
 
-    // function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
-    //     if (ignorePrinting || minter == address(0)) {
-    //         return 0;
-    //     }
-    //     uint256 guage_weight = iController(controller).gauge_relative_weight(address(guage));
-    //     uint256 guage_working_supply = guage.working_supply();
-    //     if (guage_working_supply == 0) {
-    //         return 0;
-    //     }
+    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
+        if (ignorePrinting || minter == address(0)) {
+            return 0;
+        }
 
-    //     // we scale change by 0.4 because we have no veHND
-    //     change = change.mul(40).div(100);
-    //     if (add) {
-    //         guage_working_supply = guage_working_supply.add(change);
-    //     } else {
-    //         guage_working_supply = guage_working_supply.sub(change);
-    //     }
+        uint256 exchangeRate = priceCheck(lqdr, address(want), 1e18);
 
-    //     uint256 rewards_rate = iRewardsPolicy(rewards_policy).rate_at(block.timestamp);
+        // scale down by 0.4 to represent our no veHND
+        //uint256 per_second = referenceStake.mul(rewards_rate).mul(guage_weight).div(guage_working_supply).mul(40).div(100);
+        uint256 per_second = CHEF.tokenPerSecond();
 
-    //     uint256 referenceStake = (10000 * 1e18) / cToken.exchangeRateStored();
-    //     referenceStake = referenceStake.mul(40).div(100);
+        //uint256 estimatedWant =  priceCheck(hnd, address(want),per_second);
+        uint256 compRate;
+        if (per_second != 0) {
+            compRate = per_second.mul(exchangeRate).div(1e18);
+        }
 
-    //     uint256 exchangeRate = priceCheck(hnd, address(want), 1e18);
+        return (compRate);
+    }
 
-    //     // scale down by 0.4 to represent our no veHND
-    //     // uint256 per_second = referenceStake.mul(rewards_rate).mul(guage_weight).div(guage_working_supply).mul(40).div(100);
-    //     uint256 per_second = guage_weight.mul(rewards_rate).mul(referenceStake).div(guage_working_supply.add(referenceStake)).div(10_000);
-
-    //     // uint256 estimatedWant =  priceCheck(hnd, address(want),per_second);
-    //     uint256 compRate;
-    //     if (per_second != 0) {
-    //         compRate = per_second.mul(exchangeRate).div(1e18);
-    //     }
-
-    //     return (compRate);
-    // }
 
     //WARNING. manipulatable and simple routing. Only use for safe functions
     function priceCheck(
@@ -368,14 +350,14 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     function _disposeOfComp() internal {
         if (minter != address(0)) {
             claim();
-            uint256 _ib = IERC20(hnd).balanceOf(address(this));
+            uint256 _ib = IERC20(lqdr).balanceOf(address(this));
 
             if (_ib > minIbToSell) {
                 if (!useSpirit) {
-                    address[] memory path = getTokenOutPath(hnd, address(want));
+                    address[] memory path = getTokenOutPath(lqdr, address(want));
                     IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
                 } else {
-                    address[] memory path = getTokenOutPath(hnd, wftm);
+                    address[] memory path = getTokenOutPath(lqdr, wftm);
                     IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
 
                     path = getTokenOutPath(wftm, address(want));

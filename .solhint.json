@@ -1,0 +1,9 @@
+{
+  "extends": "solhint:recommended",
+  "plugins": [],
+  "rules": {
+    "max-states-count": "off",
+    "compiler-version": ["error","0.6.12"],
+    "max-line-length": "off"
+  }
+}

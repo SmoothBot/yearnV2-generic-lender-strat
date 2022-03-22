@@ -81,7 +81,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     uint256 private constant blocksPerYear = 60 * 60 * 24 * 365;
     address public constant spookyRouter = address(0xF491e7B69E4244ad4002BC14e878a34207E38c29);
     address public constant spiritRouter = address(0x16327E3FbDaCA3bcF7E38F5Af2599D2DDc33aE52);
-    address public constant lqdr = address(0x10b620b2dbAC4Faa7D7FFD71Da486f5D44cd86f9);
+    address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
     
     ILiquidHundredChef public constant CHEF = ILiquidHundredChef(0x9A07fB107b9d8eA8B82ECF453Efb7cFb85A66Ce9);
@@ -130,7 +130,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         want.safeApprove(_cToken, uint256(-1));
         cToken.approve(address(CHEF), uint256(-1));
 
-        IERC20(lqdr).safeApprove(spookyRouter, uint256(-1));
+        IERC20(hnd).safeApprove(spookyRouter, uint256(-1));
         IERC20(wftm).safeApprove(spiritRouter, uint256(-1));
         dustThreshold = 1_000_000_000; //depends on want
     }
@@ -201,7 +201,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
             return 0;
         }
 
-        uint256 exchangeRate = priceCheck(lqdr, address(want), 1e18);
+        uint256 exchangeRate = priceCheck(hnd, address(want), 1e18);
 
         // scale down by 0.4 to represent our no veHND
         //uint256 per_second = referenceStake.mul(rewards_rate).mul(guage_weight).div(guage_working_supply).mul(40).div(100);
@@ -349,14 +349,14 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     //spookyswap is best for hnd/wftm. we check if there is a better path for the second lot
     function _disposeOfComp() internal {
         claim();
-        uint256 _ib = IERC20(lqdr).balanceOf(address(this));
+        uint256 _ib = IERC20(hnd).balanceOf(address(this));
 
         if (_ib > minIbToSell) {
             if (!useSpirit) {
-                address[] memory path = getTokenOutPath(lqdr, address(want));
+                address[] memory path = getTokenOutPath(hnd, address(want));
                 IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
             } else {
-                address[] memory path = getTokenOutPath(lqdr, wftm);
+                address[] memory path = getTokenOutPath(hnd, wftm);
                 IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
 
                 path = getTokenOutPath(wftm, address(want));

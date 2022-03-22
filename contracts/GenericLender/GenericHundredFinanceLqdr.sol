@@ -460,7 +460,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
 
         //the supply rate is derived from the borrow rate, reserve factor and the amount of total borrows.
         uint256 supplyRate = model.getSupplyRate(cashPrior.add(amount), borrows, reserves, reserverFactor);
-        // supplyRate = supplyRate.add(compBlockShareInWant(amount, true));
+        supplyRate = supplyRate.add(compBlockShareInWant(amount, true));
 
         return supplyRate.mul(blocksPerYear);
     }

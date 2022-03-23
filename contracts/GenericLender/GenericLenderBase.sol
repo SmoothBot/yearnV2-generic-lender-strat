@@ -98,10 +98,7 @@ abstract contract GenericLenderBase is IGenericLender {
     }
 
     modifier govOnly() {
-        require(
-            msg.sender == vault.governance(),
-            "!management"
-        );
+        require(msg.sender == vault.governance(), "!management");
         _;
     }
 }

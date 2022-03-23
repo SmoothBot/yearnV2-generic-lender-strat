@@ -363,14 +363,14 @@ contract Strategy is BaseStrategy {
 
         uint256 debt = vault.strategies(address(this)).totalDebt;
 
-        if (total > debt) {
+        if (total >= debt) {
             _profit = total - debt;
 
             uint256 amountToFree = _profit.add(_debtPayment);
-            //we need to add outstanding to our profit
-            //dont need to do logic if there is nothiing to free
+            // we need to add outstanding to our profit
+            // dont need to do logic if there is nothiing to free
             if (amountToFree > 0 && looseAssets < amountToFree) {
-                //withdraw what we can withdraw
+                // withdraw what we can withdraw
                 _withdrawSome(amountToFree.sub(looseAssets));
                 uint256 newLoose = want.balanceOf(address(this));
 
@@ -470,7 +470,7 @@ contract Strategy is BaseStrategy {
         require(share == 1000, "SHARE!=1000");
     }
 
-    //cycle through withdrawing from worst rate first
+    // Cycle through withdrawing from worst rate first
     function _withdrawSome(uint256 _amount) internal returns (uint256 amountWithdrawn) {
         if (lenders.length == 0) {
             return 0;
@@ -528,9 +528,8 @@ contract Strategy is BaseStrategy {
         }
     }
 
-    function ethToWant(uint256 _amount) public override view returns (uint256) {
-        if (address(want) == weth)
-            return _amount;
+    function ethToWant(uint256 _amount) public view override returns (uint256) {
+        if (address(want) == weth) return _amount;
 
         address[] memory path = new address[](2);
         path[0] = weth;

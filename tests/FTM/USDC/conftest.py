@@ -10,8 +10,17 @@ def scrToken(interface):
     yield interface.CErc20I("0xE45Ac34E528907d0A0239ab5Db507688070B20bf")
 
 @pytest.fixture
+def hundredGauge(interface):
+    yield "0x110614276F7b9Ae8586a1C1D9Bc079771e2CE8cF"
+    
+@pytest.fixture
 def crToken(interface):
     yield interface.CErc20I("0x328A7b4d538A2b3942653a9983fdA3C12c571141")
+
+@pytest.fixture
+def hToken(interface):
+    yield interface.CErc20I("0x243E33aa7f6787154a8E59d3C27a66db3F8818ee")
+
 
 @pytest.fixture
 def gov(accounts):
@@ -60,6 +69,8 @@ def live_strategy(
     yield Strategy.at('0x754133e0f67CB51263d6d5F41f2dF1a58a9D36b7')
 
 
+lqdrPID = 0
+
 @pytest.fixture
 def strategy(
     strategist,
@@ -67,16 +78,23 @@ def strategy(
     vault,
     scrToken,
     crToken,
+    hToken,
+    hundredGauge,
     gov,
     Strategy,
     GenericScream,
-    GenericIronBank
+    GenericIronBank,
+    GenericHundredFinance,
+    GenericHundredFinanceLqdr
+    
 ):
     strategy = strategist.deploy(Strategy, vault)
     strategy.setKeeper(keeper)
-
+    
     screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
     ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", crToken)
+    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hundredGauge)
+    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance", hToken, lqdrPID)
     assert screamPlugin.underlyingBalanceStored() == 0
     scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
     print(scapr/1e18)
@@ -87,5 +105,90 @@ def strategy(
     assert scapr2 < scapr
     strategy.addLender(screamPlugin, {"from": gov})
     strategy.addLender(ibPlugin, {"from": gov})
-    assert strategy.numLenders() == 2
+    strategy.addLender(hndPlugin, {"from": gov})
+    strategy.addLender(hndLQDRPlugin, {"from": gov})
+
+    assert strategy.numLenders() == 4
+    yield strategy
+
+
+@pytest.fixture
+def strategyHndLqdr(
+    strategist,
+    keeper,
+    vault,
+    scrToken,
+    crToken,
+    hToken,
+    hundredGauge,
+    gov,
+    Strategy,
+    GenericScream,
+    GenericIronBank,
+    GenericHundredFinance,
+    GenericHundredFinanceLqdr
+    
+):
+    strategy = strategist.deploy(Strategy, vault)
+    strategy.setKeeper(keeper)
+    
+    screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
+    ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", crToken)
+    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hundredGauge)
+    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance", hToken, lqdrPID)
+    assert screamPlugin.underlyingBalanceStored() == 0
+    scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
+    print(scapr/1e18)
+    print((screamPlugin.apr() - scapr)/1e18)
+
+    scapr2 = screamPlugin.compBlockShareInWant(5_000_000 * 1e6, True) * 3154 * 10**4
+    print(scapr2/1e18)
+    assert scapr2 < scapr
+    #strategy.addLender(screamPlugin, {"from": gov})
+    #strategy.addLender(ibPlugin, {"from": gov})
+    #strategy.addLender(hndPlugin, {"from": gov})
+    strategy.addLender(hndLQDRPlugin, {"from": gov})
+
+    assert strategy.numLenders() == 1
+    yield strategy
+
+
+@pytest.fixture
+def strategyHnd(
+    strategist,
+    keeper,
+    vault,
+    scrToken,
+    crToken,
+    hToken,
+    hundredGauge,
+    gov,
+    Strategy,
+    GenericScream,
+    GenericIronBank,
+    GenericHundredFinance,
+    GenericHundredFinanceLqdr
+    
+):
+    strategy = strategist.deploy(Strategy, vault)
+    strategy.setKeeper(keeper)
+    
+    screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
+    ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", crToken)
+    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hundredGauge)
+    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance", hToken, lqdrPID)
+    assert screamPlugin.underlyingBalanceStored() == 0
+    scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
+    print(scapr/1e18)
+    print((screamPlugin.apr() - scapr)/1e18)
+
+    scapr2 = screamPlugin.compBlockShareInWant(5_000_000 * 1e6, True) * 3154 * 10**4
+    print(scapr2/1e18)
+    assert scapr2 < scapr
+    #strategy.addLender(screamPlugin, {"from": gov})
+    #strategy.addLender(ibPlugin, {"from": gov})
+    strategy.addLender(hndPlugin, {"from": gov})
+    #strategy.addLender(hndLQDRPlugin, {"from": gov})
+
+    assert strategy.numLenders() == 1
     yield strategy

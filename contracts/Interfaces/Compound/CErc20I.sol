@@ -7,6 +7,7 @@ interface CErc20I is CTokenI {
     function mint(uint256 mintAmount) external returns (uint256);
 
     function redeem(uint256 redeemTokens) external returns (uint256);
+
     function comptroller() external view returns (address);
 
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);

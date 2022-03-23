@@ -1,7 +1,7 @@
 import pytest
 from brownie import Wei, config, Contract
 
-fixtures = "token", "scrToken", "ibToken", "hToken", "hGuage", "hChef", "hPID"
+fixtures = "token", "scrToken", "ibToken", "hToken", "hGuage", "hChef", "hPID", "lenders"
 params = [
     pytest.param( # WFTM
         "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75", # token
@@ -11,6 +11,7 @@ params = [
         "0x110614276F7b9Ae8586a1C1D9Bc079771e2CE8cF", # HND Gauge
         "0x9A07fB107b9d8eA8B82ECF453Efb7cFb85A66Ce9", # LQDR HND Chef
         0, # hPID
+        ['Scream', 'IB', 'HND', 'LqdrHND'],
         id="USDC Generic Lender",
     ),
 ]
@@ -44,6 +45,10 @@ def hChef(request, interface):
 def hPID(request, interface):
     yield request.param
 
+@pytest.fixture
+def lenders(request, interface):
+    yield request.param
+
 
 @pytest.fixture
 def gov(accounts):
@@ -66,8 +71,12 @@ def guardian(accounts):
 def strategist(accounts):
     # YFI Whale, probably
     yield accounts[2]
-    # This is our trusty bot!
-    yield accounts[4]
+
+
+@pytest.fixture
+def amount():
+    ## todo - make generic
+    yield 10000000 * 10 ** 6
 
 @pytest.fixture
 def vault(gov, rewards, guardian, token, pm):
@@ -75,7 +84,6 @@ def vault(gov, rewards, guardian, token, pm):
     vault = Vault.deploy({"from": guardian})
     vault.initialize(token, gov, rewards, "", "")
     vault.setDepositLimit(2**256-1, {"from": gov})
-
     yield vault
 
 @pytest.fixture
@@ -87,6 +95,7 @@ def Vault(pm):
 #     Strategy
 # ): 
 #     yield Strategy.at('0x754133e0f67CB51263d6d5F41f2dF1a58a9D36b7')
+
 
 @pytest.fixture
 def strategy(
@@ -104,113 +113,124 @@ def strategy(
     GenericScream,
     GenericIronBank,
     GenericHundredFinance,
-    GenericHundredFinanceLqdr
-    
+    GenericHundredFinanceLqdr,
+    fn_isolation
 ):
     strategy = strategist.deploy(Strategy, vault)
     strategy.setKeeper(keeper)
-    
-    # screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
-    # ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", ibToken)
-    # hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hGuage)
-    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance Lqdr", hToken, hGuage, hChef, hPID)
-
-    # strategy.addLender(screamPlugin, {"from": gov})
-    # strategy.addLender(ibPlugin, {"from": gov})
-    # strategy.addLender(hndPlugin, {"from": gov})
-    strategy.addLender(hndLQDRPlugin, {"from": gov})
-
-    assert strategy.numLenders() == 1
+    strategy.setWithdrawalThreshold(0)
     yield strategy
 
-
 @pytest.fixture
-def strategyHndLqdr(
+def lenderScream(
     strategist,
-    keeper,
-    vault,
+    strategy,
     scrToken,
     ibToken,
+    GenericScream,
+    lenders
+):
+    yield strategist.deploy(GenericScream, strategy, "Scream", scrToken)
+
+@pytest.fixture
+def lenderIB(
+    strategist,
+    strategy,
+    ibToken,
+    GenericIronBank,
+    
+):    
+    yield strategist.deploy(GenericIronBank, strategy, "IB", ibToken)
+
+@pytest.fixture
+def lenderHND(
+    strategist,
+    strategy,
+    hToken,
+    hGuage,
+    GenericHundredFinance
+):
+    yield strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hGuage)
+
+@pytest.fixture
+def lenderLqdrHND(
+    strategist,
+    strategy,
     hToken,
     hGuage,
     hChef,
     hPID,
-    gov,
-    Strategy,
-    GenericScream,
-    GenericIronBank,
-    GenericHundredFinance,
     GenericHundredFinanceLqdr
-    
 ):
-    strategy = strategist.deploy(Strategy, vault)
-    strategy.setKeeper(keeper)
-    
-    screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
-    ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", ibToken)
-    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hGuage)
-    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance Lqdr", hToken, hGuage, hChef, hPID)
-    assert screamPlugin.underlyingBalanceStored() == 0
-    scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
-    print(scapr/1e18)
-    print((screamPlugin.apr() - scapr)/1e18)
-
-    scapr2 = screamPlugin.compBlockShareInWant(5_000_000 * 1e6, True) * 3154 * 10**4
-    print(scapr2/1e18)
-    assert scapr2 < scapr
-    #strategy.addLender(screamPlugin, {"from": gov})
-    #strategy.addLender(ibPlugin, {"from": gov})
-    #strategy.addLender(hndPlugin, {"from": gov})
-    strategy.addLender(hndLQDRPlugin, {"from": gov})
-
-    assert strategy.numLenders() == 1
-    yield strategy
-
-
-@pytest.fixture
-def strategyHnd(
-    strategist,
-    keeper,
-    vault,
-    scrToken,
-    ibToken,
-    hToken,
-    hGuage,
-    hChef,
-    hPID,
-    gov,
-    Strategy,
-    GenericScream,
-    GenericIronBank,
-    GenericHundredFinance,
-    GenericHundredFinanceLqdr
-    
-):
-    strategy = strategist.deploy(Strategy, vault)
-    strategy.setKeeper(keeper)
-    
-    screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
-    ibPlugin = strategist.deploy(GenericIronBank, strategy, "IB", ibToken)
-    hndPlugin = strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hGuage)
-    hndLQDRPlugin = strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance Lqdr", hToken, hGuage, hChef, hPID)
-    assert screamPlugin.underlyingBalanceStored() == 0
-    scapr = screamPlugin.compBlockShareInWant(0, False) * 3154 * 10**4
-    print(scapr/1e18)
-    print((screamPlugin.apr() - scapr)/1e18)
-
-    scapr2 = screamPlugin.compBlockShareInWant(5_000_000 * 1e6, True) * 3154 * 10**4
-    print(scapr2/1e18)
-    assert scapr2 < scapr
-    #strategy.addLender(screamPlugin, {"from": gov})
-    #strategy.addLender(ibPlugin, {"from": gov})
-    strategy.addLender(hndPlugin, {"from": gov})
-    #strategy.addLender(hndLQDRPlugin, {"from": gov})
-
-    assert strategy.numLenders() == 1
-    yield strategy
+    yield strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance Lqdr", hToken, hGuage, hChef, hPID)
 
 # Function scoped isolation fixture to enable xdist.
 # Snapshots the chain before each test and reverts after test completion.
 @pytest.fixture(scope="function", autouse=True)
-def shared_setup(fn_isolation):
+def shared_setup(fn_isolation, lenders):
     pass
+
+@pytest.fixture
+def strategyAllLenders(
+    strategy,
+    gov,
+    lenderScream,
+    lenderIB,
+    lenderHND,
+    lenderLqdrHND,
+    lenders
+):
+    lenderScream.setDustThreshold(0, {'from': gov})
+    lenderIB.setDustThreshold(0, {'from': gov})
+    lenderHND.setDustThreshold(0, {'from': gov})
+    lenderLqdrHND.setDustThreshold(0, {'from': gov})
+    if 'Scream' in lenders:
+        strategy.addLender(lenderScream, {'from': gov})
+    if 'IB' in lenders:
+        strategy.addLender(lenderIB, {'from': gov})
+    if 'HND' in lenders:
+        strategy.addLender(lenderHND, {'from': gov})
+    if 'LqdrHND' in lenders:
+        strategy.addLender(lenderLqdrHND, {'from': gov})
+    assert strategy.numLenders() == len(lenders)
+
+@pytest.fixture
+def strategyAddScream(
+    strategy,
+    gov,
+    lenderScream
+):
+    strategy.addLender(lenderScream, {'from': gov})
+    lenderScream.setDustThreshold(0, {'from': gov})
+    assert strategy.numLenders() == 1
+
+@pytest.fixture
+def strategyAddIB(
+    strategy,
+    gov,
+    lenderIB
+):
+    strategy.addLender(lenderIB, {'from': gov})
+    lenderIB.setDustThreshold(0, {'from': gov})
+    assert strategy.numLenders() == 1
+
+@pytest.fixture
+def strategyAddHND(
+    strategy,
+    gov,
+    lenderHND
+):
+    strategy.addLender(lenderHND, {'from': gov})
+    lenderHND.setDustThreshold(0, {'from': gov})
+    assert strategy.numLenders() == 1
+
+@pytest.fixture
+def strategyAddLqdrHND(
+    strategy,
+    gov,
+    lenderLqdrHND
+):
+    strategy.addLender(lenderLqdrHND, {'from': gov})
+    lenderLqdrHND.setDustThreshold(0, {'from': gov})
+    assert strategy.numLenders() == 1
+    

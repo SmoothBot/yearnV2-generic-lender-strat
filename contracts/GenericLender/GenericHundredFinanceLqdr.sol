@@ -154,7 +154,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         return cToken.supplyRatePerBlock().add(guageAPR());
     }
 
-    function guageAPR(uint256 change, bool add) public view returns (uint256) {
+    function guageAPR() public view returns (uint256) {
         if (ignorePrinting) {
             return 0;
         }
@@ -302,16 +302,16 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         uint256 _ib = IERC20(hnd).balanceOf(address(this));
 
         if (_ib > minIbToSell) {
-            if (!useSpirit) {
-                address[] memory path = getTokenOutPath(hnd, address(want));
-                IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
-            } else {
+            if (useSpirit) {
                 address[] memory path = getTokenOutPath(hnd, wftm);
                 IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
 
                 path = getTokenOutPath(wftm, address(want));
                 uint256 _wftm = IERC20(wftm).balanceOf(address(this));
                 IUniswapV2Router02(spiritRouter).swapExactTokensForTokens(_wftm, uint256(0), path, address(this), now);
+            } else {
+                address[] memory path = getTokenOutPath(hnd, address(want));
+                IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
             }
         }
         

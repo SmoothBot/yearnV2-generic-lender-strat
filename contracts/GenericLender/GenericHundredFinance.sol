@@ -297,23 +297,23 @@ contract GenericHundredFinance is GenericLenderBase {
         iMinter(minter).mint(address(guage));
     }
 
-    //spookyswap is best for hnd/wftm. we check if there is a better path for the second lot
+    // Spookyswap is best for hnd/wftm. we check if there is a better path for the second lot
     function _disposeOfComp() internal {
         if (minter != address(0)) {
             iMinter(minter).mint(address(guage));
             uint256 _ib = IERC20(hnd).balanceOf(address(this));
 
             if (_ib > minIbToSell) {
-                if (!useSpirit) {
-                    address[] memory path = getTokenOutPath(hnd, address(want));
-                    IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
-                } else {
+                if (useSpirit) {
                     address[] memory path = getTokenOutPath(hnd, wftm);
                     IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
 
                     path = getTokenOutPath(wftm, address(want));
                     uint256 _wftm = IERC20(wftm).balanceOf(address(this));
                     IUniswapV2Router02(spiritRouter).swapExactTokensForTokens(_wftm, uint256(0), path, address(this), now);
+                } else {
+                    address[] memory path = getTokenOutPath(hnd, address(want));
+                    IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
                 }
             }
         }

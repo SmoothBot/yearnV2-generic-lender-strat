@@ -11,43 +11,9 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
+import "../Interfaces/HundredFinance/IGuage.sol";
 
 import "./GenericLenderBase.sol";
-
-interface iGuage is IERC20 {
-    function claimRewards(
-        address[] memory holders,
-        address[] memory cTokens,
-        address[] memory rewards,
-        bool borrowers,
-        bool suppliers
-    ) external;
-
-    function rewardSupplySpeeds(address, address)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        );
-
-    function rewardTokensMap(address) external view returns (bool);
-
-    function deposit(uint256) external;
-
-    function withdraw(uint256) external;
-
-    function minter() external view returns (address);
-
-    function controller() external view returns (address);
-
-    function reward_policy_maker() external view returns (address);
-
-    function working_supply() external view returns (uint256);
-
-    function inflation_rate() external view returns (uint256);
-}
 
 interface iMinter {
     function mint(address) external;
@@ -82,7 +48,7 @@ contract GenericHundredFinance is GenericLenderBase {
     address public constant spiritRouter = address(0x16327E3FbDaCA3bcF7E38F5Af2599D2DDc33aE52);
     address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
-    iGuage public guage;
+    IGuage public guage;
     address public minter;
     address public rewards_policy;
     address public controller;
@@ -113,7 +79,7 @@ contract GenericHundredFinance is GenericLenderBase {
     function _initialize(address _cToken, address _guage) internal {
         require(address(cToken) == address(0), "GenericIB already initialized");
         cToken = CErc20I(_cToken);
-        guage = iGuage(_guage);
+        guage = IGuage(_guage);
         _setupSecondaryContract();
         require(cToken.underlying() == address(want), "WRONG CTOKEN");
         want.safeApprove(_cToken, uint256(-1));
@@ -143,7 +109,7 @@ contract GenericHundredFinance is GenericLenderBase {
     }
 
     function setGuage(address _guage) external govOnly {
-        guage = iGuage(_guage);
+        guage = IGuage(_guage);
         _setupSecondaryContract();
     }
 

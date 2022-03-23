@@ -65,6 +65,7 @@ interface  ILiquidHundredChef {
     // uint256 public overDistributed;
 
     // address public liHNDStrategy;
+    function liHNDStrategy() external view returns (address);
 
     // string public __NAME__;
 

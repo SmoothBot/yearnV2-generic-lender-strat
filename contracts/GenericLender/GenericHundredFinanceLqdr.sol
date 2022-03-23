@@ -12,59 +12,9 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 import "../Interfaces/HundredFinance/ILiquidHundredChef.sol";
+import "../Interfaces/HundredFinance/IGuage.sol";
 
 import "./GenericLenderBase.sol";
-
-// interface iGuage is IERC20 {
-//     function claimRewards(
-//         address[] memory holders,
-//         address[] memory cTokens,
-//         address[] memory rewards,
-//         bool borrowers,
-//         bool suppliers
-//     ) external;
-
-//     function rewardSupplySpeeds(address, address)
-//         external
-//         view
-//         returns (
-//             uint256,
-//             uint256,
-//             uint256
-//         );
-
-//     function rewardTokensMap(address) external view returns (bool);
-
-//     function deposit(uint256) external;
-
-//     function withdraw(uint256) external;
-
-//     function minter() external view returns (address);
-
-//     function controller() external view returns (address);
-
-//     function reward_policy_maker() external view returns (address);
-
-//     function working_supply() external view returns (uint256);
-
-//     function inflation_rate() external view returns (uint256);
-// }
-
-// interface iMinter {
-//     function mint(address) external;
-// }
-
-// interface iRewardsPolicy {
-//     function rate_at(uint256) external view returns (uint256);
-// }
-
-// interface iController {
-//     function gauge_relative_weight(address) external view returns (uint256);
-// }
-
-// interface IERC20Extended {
-//     function decimals() external view returns (uint256);
-// }
 
 /********************
  *   A lender plugin for LenderYieldOptimiser for any erc20 asset on compound (not eth)
@@ -84,10 +34,9 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
     
-    ILiquidHundredChef public constant CHEF = ILiquidHundredChef(0x9A07fB107b9d8eA8B82ECF453Efb7cFb85A66Ce9);
 
 
-    // iGuage public guage;
+    // IGuage public guage;
     address public minter;
     address public rewards_policy;
     address public controller;
@@ -101,34 +50,40 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     uint256 public minIbToSell = 0 ether;
 
     CErc20I public cToken;
+    ILiquidHundredChef public chef;
+    IGuage public guage;
     uint256 public pid;
     
     constructor(
         address _strategy,
         string memory name,
         address _cToken,
+        address _guage,
+        address _chef,
         uint256 _pid
     ) public GenericLenderBase(_strategy, name) {
-        _initialize(_cToken, _pid);
+        _initialize(_cToken, _guage, _chef, _pid);
     }
 
-    function initialize(address _cToken, uint256 _pid) public {
-        _initialize(_cToken, _pid);
+    function initialize(address _cToken, address _guage, address _chef, uint256 _pid) public {
+        _initialize(_cToken, _guage, _chef, _pid);
     }
 
-    function _initialize(address _cToken, uint256 _pid) internal {
+    function _initialize(address _cToken, address _guage, address _chef, uint256 _pid) internal {
         require(address(cToken) == address(0), "Generic HND LQDR already initialized");
         cToken = CErc20I(_cToken);
+        guage = IGuage(_guage);
+        chef = ILiquidHundredChef(_chef);
         pid = _pid;
 
         // Check the cToken has the correct underlying
         require(cToken.underlying() == address(want), "WRONG CTOKEN");
 
         // Check PID matched
-        require(CHEF.lpToken(_pid) == address(_cToken), "WRONG PID");
+        require(chef.lpToken(_pid) == address(_cToken), "WRONG PID");
 
         want.safeApprove(_cToken, uint256(-1));
-        cToken.approve(address(CHEF), uint256(-1));
+        cToken.approve(address(chef), uint256(-1));
 
         IERC20(hnd).safeApprove(spookyRouter, uint256(-1));
         IERC20(wftm).safeApprove(spiritRouter, uint256(-1));
@@ -139,10 +94,12 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         address _strategy,
         string memory _name,
         address _cToken,
+        address _guage,
+        address _chef,
         uint256 _pid
     ) external returns (address newLender) {
         newLender = _clone(_strategy, _name);
-        GenericHundredFinanceLqdr(newLender).initialize(_cToken, _pid);
+        GenericHundredFinanceLqdr(newLender).initialize(_cToken, _guage, _chef, _pid);
     }
 
     function nav() external view override returns (uint256) {
@@ -177,14 +134,15 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         }
     }
 
-    function underlyingBalanceStored() public view returns (uint256 balance) {
+    function underlyingBalanceStored() public view returns (uint256 _balance) {
         uint256 cTokenTotal = cToken.balanceOf(address(this));
         cTokenTotal = cTokenTotal.add(cTokenStaked());
         if (cTokenTotal < dustThreshold) {
-            balance = 0;
+            _balance = 0;
         } else {
             // The current exchange rate as an unsigned integer, scaled by 1e18.
-            balance = cTokenTotal.mul(cToken.exchangeRateStored()).div(1e18);
+            _balance = cTokenToWant(cTokenTotal);
+            // _balance = cTokenTotal.mul(cToken.exchangeRateStored()).div(1e18);
         }
     }
 
@@ -193,26 +151,18 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        return (cToken.supplyRatePerBlock().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
+        return cToken.supplyRatePerBlock().add(guageAPR());
     }
 
-    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
-        if (ignorePrinting || minter == address(0)) {
+    function guageAPR(uint256 change, bool add) public view returns (uint256) {
+        if (ignorePrinting) {
             return 0;
         }
 
-        uint256 exchangeRate = priceCheck(hnd, address(want), 1e18);
-
-        // scale down by 0.4 to represent our no veHND
-        //uint256 per_second = referenceStake.mul(rewards_rate).mul(guage_weight).div(guage_working_supply).mul(40).div(100);
-        uint256 per_second = CHEF.tokenPerSecond();
-
-        //uint256 estimatedWant =  priceCheck(hnd, address(want),per_second);
-        uint256 compRate;
-        if (per_second != 0) {
-            compRate = per_second.mul(exchangeRate).div(1e18);
-        }
-
+        uint256 poolTotal = guage.balanceOf(chef.liHNDStrategy());
+        uint256 tokensPerSecond = chef.tokenPerSecond();
+        uint256 wantTokenPerSecond = priceCheck(hnd, address(want), tokensPerSecond);
+        uint256 compRate = wantTokenPerSecond.mul(blocksPerYear).mul(1e18).div(cTokenToWant(poolTotal));
         return (compRate);
     }
 
@@ -244,7 +194,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     // emergency withdraw. sends balance plus amount to governance
     function emergencyWithdraw(uint256 amount) external override management {
         // Emergency withdraw from masterchef
-        CHEF.emergencyWithdraw(pid, address(this));
+        chef.emergencyWithdraw(pid, address(this));
 
         // dont care about errors here. we want to exit what we can
         cToken.redeem(amount);
@@ -256,7 +206,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     // emergency withdraw. sends balance plus amount to governance
     function emergencyWithdrawAll() external management {
         // Emergency withdraw from masterchef
-        CHEF.emergencyWithdraw(pid, address(this));
+        chef.emergencyWithdraw(pid, address(this));
 
         // dont care about errors here. we want to exit what we can
         cToken.redeem(cToken.balanceOf(address(this)));
@@ -299,7 +249,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
 
         if (looseBalance >= amount) {
             want.safeTransfer(address(strategy), amount);
-            CHEF.deposit(pid, cToken.balanceOf(address(this)), address(this));
+            chef.deposit(pid, cToken.balanceOf(address(this)), address(this));
             return amount;
         }
 
@@ -331,15 +281,15 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     }
 
     function stakeCToken(uint256 _cTokenAmount) internal {
-        CHEF.deposit(pid, _cTokenAmount, address(this));
+        chef.deposit(pid, _cTokenAmount, address(this));
     }
 
     function unstakeCToken(uint256 _cTokenAmount) internal {
-        CHEF.withdraw(pid, _cTokenAmount, address(this));
+        chef.withdraw(pid, _cTokenAmount, address(this));
     }
 
     function claim() internal {
-        CHEF.harvest(pid, address(this));
+        chef.harvest(pid, address(this));
     }
 
     function manualClaimAndDontSell() external management {
@@ -384,12 +334,12 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         require(cToken.mint(balance) == 0, "ctoken: mint fail");
 
         //deposit to gauge
-        CHEF.deposit(pid, cToken.balanceOf(address(this)), address(this));
+        chef.deposit(pid, cToken.balanceOf(address(this)), address(this));
     }
 
     function withdrawAll() external override management returns (bool) {
         uint256 liquidity = want.balanceOf(address(cToken));
-        uint256 liquidityInCTokens = convertFromUnderlying(liquidity);
+        uint256 liquidityInCTokens = cTokenToWant(liquidity);
         uint256 staked = cTokenStaked();
         if (staked > 0) {
             unstakeCToken(staked);
@@ -409,7 +359,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
             } else {
                 //redo or else price changes
                 cToken.mint(0);
-                liquidityInCTokens = convertFromUnderlying(want.balanceOf(address(cToken)));
+                liquidityInCTokens = cTokenToWant(want.balanceOf(address(cToken)));
                 //take all we can
                 all = false;
                 cToken.redeem(liquidityInCTokens);
@@ -423,20 +373,24 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         return all;
     }
 
-    function convertFromUnderlying(uint256 amountOfUnderlying) public view returns (uint256 balance) {
-        if (amountOfUnderlying == 0) {
+    function wantToCToken(uint256 amountWant) public view returns (uint256 balance) {
+        if (amountWant == 0) {
             balance = 0;
         } else {
-            balance = amountOfUnderlying.mul(1e18).div(cToken.exchangeRateStored());
+            balance = amountWant.mul(1e18).div(cToken.exchangeRateStored());
         }
     }
 
+    function cTokenToWant(uint256 amountCToken) public view returns (uint256 balance) {
+        balance = amountCToken.mul(cToken.exchangeRateStored()).div(1e18);
+    }
+
     function cTokenStaked() public view returns (uint256) {
-        return CHEF.userInfo(pid, address(this)).amount;
+        return chef.userInfo(pid, address(this)).amount;
     }
 
     function wantStaked() public view returns (uint256) {
-        return convertFromUnderlying(cTokenStaked());
+        return cTokenToWant(cTokenStaked());
     }
 
     function hasAssets() external view override returns (bool) {
@@ -460,7 +414,9 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
 
         //the supply rate is derived from the borrow rate, reserve factor and the amount of total borrows.
         uint256 supplyRate = model.getSupplyRate(cashPrior.add(amount), borrows, reserves, reserverFactor);
-        supplyRate = supplyRate.add(compBlockShareInWant(amount, true));
+
+        // TODO - This ignores the impact `amount` will have on the APR. Will need to be fixed.
+        supplyRate = supplyRate.add(guageAPR());
 
         return supplyRate.mul(blocksPerYear);
     }

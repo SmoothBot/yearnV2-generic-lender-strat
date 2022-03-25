@@ -1,0 +1,330 @@
+from itertools import count
+from brownie import Wei, reverts, Contract
+from useful_methods import genericStateOfVault, genericStateOfStrat
+import random
+import brownie
+import pytest
+import conftest as config
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_scream(strategyAddScream, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, interface):
+    run_emergency_exit_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, interface)
+
+# @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+# def test_normal_activity_ib(strategyAddIB, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
+#     run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_hnd(strategyAddHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, interface):
+    run_emergency_exit_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, interface)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_lqdr_hnd(strategyAddLqdrHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, interface):
+    run_emergency_exit_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, interface)
+
+def run_emergency_exit_test(
+    token,
+    scrToken,
+    ibToken,
+    hToken,
+    chain,
+    whale,
+    vault,
+    strategy,
+    gov,
+    strategist,
+    lenders,
+    interface
+):
+    starting_balance = token.balanceOf(strategist)
+
+    token.approve(vault, 2 ** 256 - 1, {"from": whale})
+    token.approve(vault, 2 ** 256 - 1, {"from": strategist})
+
+    debt_ratio = 10_000
+    vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 1000, {"from": gov})
+
+    whale_deposit = 100000 * 1e6
+    vault.deposit(whale_deposit, {"from": whale})
+    chain.sleep(1)
+    chain.mine(1)
+    strategy.setWithdrawalThreshold(0, {"from": gov})
+    assert strategy.harvestTrigger(1 * 1e18) == True
+    print(whale_deposit / 1e18)
+    status = strategy.lendStatuses()
+    form = "{:.2%}"
+    formS = "{:,.0f}"
+    for j in status:
+        print(
+            f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)} APR: {form.format(j[2]/1e18)}"
+        )
+
+    strategy.harvest({"from": strategist})
+    status = strategy.lendStatuses()
+
+    lender = interface.IGeneric(strategy.lenders(0))
+
+    lender.emergencyWithdraw(lender.balance(), {"from": gov})
+
+    dust = whale_deposit * (0.001)
+    assert lender.balance() < dust
+    assert pytest.approx(strategy.estimatedTotalAssets(), rel=1e-5) == whale_deposit
+
+    """
+    form = "{:.2%}"
+    formS = "{:,.0f}"
+    for j in status:
+        print(
+            f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)} APR: {form.format(j[2]/1e18)}"
+        )
+    startingBalance = vault.totalAssets()
+    for i in range(4):
+
+        waitBlock = 25
+        print(f'\n----wait {waitBlock} blocks----')
+        chain.mine(waitBlock)
+        chain.sleep(waitBlock)
+        print(f'\n----harvest----')
+        if 'Scream' in lenders:
+            scrToken.mint(0,{"from": whale})
+        if 'IB' in lenders:
+            ibToken.mint(0,{"from": whale})
+        if 'HND' in lenders:
+            hToken.mint(0,{"from": whale})
+        strategy.harvest({"from": strategist})
+
+        # genericStateOfStrat(strategy, currency, vault)
+        # genericStateOfVault(vault, currency)
+
+        profit = (vault.totalAssets() - startingBalance) / 1e6
+        strState = vault.strategies(strategy)
+        totalReturns = strState[7]
+        totaleth = totalReturns / 1e6
+        # print(f'Real Profit: {profit:.5f}')
+        difff = profit - totaleth
+        # print(f'Diff: {difff}')
+
+        blocks_per_year = 3154 * 10**4
+        assert startingBalance != 0
+        time = (i + 1) * waitBlock
+        assert time != 0
+        apr = (totalReturns / startingBalance) * (blocks_per_year / time)
+        assert apr > 0 and apr < 10
+        # print(apr)
+        print(f"implied apr: {apr:.8%}")
+
+    vault.withdraw(vault.balanceOf(whale), {"from": whale})
+
+    vBal = vault.balanceOf(strategy)
+    assert vBal > 0
+    print(vBal)
+    vBefore = vault.balanceOf(strategist)
+    vault.transferFrom(strategy, strategist, vBal, {"from": strategist})
+    print(vault.balanceOf(strategist) - vBefore)
+    assert vault.balanceOf(strategist) - vBefore > 0
+    """
+
+# @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+# def test_scream_up_down(
+#     Strategy,
+#     scrToken,
+#     hToken,
+#     GenericScream,
+#     chain,
+#     whale,
+#     token,
+#     strategist,
+#     vault,
+#     Contract,
+#     accounts
+# ):
+#     currency = token
+#     gov = accounts.at(vault.governance(), force=True)
+#     strategy = strategist.deploy(Strategy, vault)
+#     screamPlugin = strategist.deploy(GenericScream, strategy, "Scream", scrToken)
+    
+#     strategy.setRewards(strategist, {"from": strategist})
+#     strategy.setWithdrawalThreshold(0, {"from": strategist})
+
+#     strategy.addLender(screamPlugin, {"from": gov})
+
+#     strategy.setDebtThreshold(1*1e6, {"from": gov})
+#     strategy.setProfitFactor(1500, {"from": gov})
+#     strategy.setMaxReportDelay(86000, {"from": gov})
+
+#     starting_balance = currency.balanceOf(whale)
+
+#     decimals = currency.decimals()
+#     #print(vault.withdrawalQueue(1))
+
+#     #strat2 = Contract(vault.withdrawalQueue(1))
+
+#     currency.approve(vault, 2 ** 256 - 1, {"from": whale})
+#     currency.approve(vault, 2 ** 256 - 1, {"from": strategist})
+
+#     deposit_limit = 1_000_000_000 * (10 ** (decimals))
+#     debt_ratio = 10_000
+    
+#     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 500, {"from": gov})
+#     vault.setDepositLimit(deposit_limit, {"from": gov})
+
+#     assert deposit_limit == vault.depositLimit()
+ 
+#     whale_deposit = 1000000 * (10 ** (decimals))
+#     vault.deposit(whale_deposit, {"from": whale})
+
+#     chain.sleep(10)
+#     chain.mine(10)
+#     strategy.harvest({"from": strategist})
+   
+#     status = strategy.lendStatuses()
+#     form = "{:.2%}"
+#     formS = "{:,.0f}"
+#     for j in status:
+#         print(
+#             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)}, APR: {form.format(j[2]/1e18)}"
+#         )
+#     chain.sleep(20)
+#     chain.mine(20)
+#     scrToken.mint(0, {"from": strategist})
+
+
+#     vault.updateStrategyDebtRatio(strategy, 0, {"from": gov})
+#     strategy.harvest({"from": strategist})
+#     print(scrToken.balanceOf(screamPlugin))
+#     print(screamPlugin.hasAssets())
+#     chain.mine(20)
+#     scrToken.mint(0, {"from": strategist})
+#     chain.mine(10)
+#     strategy.harvest({"from": strategist})
+    
+#     print(scrToken.balanceOf(screamPlugin))
+#     print(screamPlugin.hasAssets())
+#     chain.mine(20)
+#     scrToken.mint(0, {"from": strategist})
+
+#     chain.mine(10)
+#     chain.sleep(10)
+#     strategy.harvest({"from": strategist})
+#     print(screamPlugin.hasAssets())
+#     print(scrToken.balanceOf(screamPlugin))
+#     status = strategy.lendStatuses()
+#     for j in status:
+#         print(
+#             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)}, APR: {form.format(j[2]/1e18)}"
+#         )
+#     chain.mine(20)
+#     scrToken.mint(0, {"from": strategist})
+#     hToken.mint(0, {"from": strategist})
+
+#     vault.updateStrategyDebtRatio(strategy, 10_000, {"from": gov})
+#     strategy.harvest({"from": strategist})
+
+#     status = strategy.lendStatuses()
+#     for j in status:
+#         print(
+#             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)}, APR: {form.format(j[2]/1e18)}"
+#         )
+
+
+# @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+# def test_scream_up_down(
+#     Strategy,
+#     hToken,
+#     hundredGauge,
+#     GenericHundredFinance,
+#     chain,
+#     whale,
+#     token,
+#     strategist,
+#     vault,
+#     Contract,
+#     accounts
+# ):
+#     currency = token
+#     gov = accounts.at(vault.governance(), force=True)
+#     strategy = strategist.deploy(Strategy, vault)
+#     screamPlugin = strategist.deploy(GenericHundredFinance, strategy, "Scream", hToken, hundredGauge)
+    
+#     strategy.setRewards(strategist, {"from": strategist})
+#     strategy.setWithdrawalThreshold(0, {"from": strategist})
+
+#     strategy.addLender(screamPlugin, {"from": gov})
+
+#     strategy.setDebtThreshold(1*1e6, {"from": gov})
+#     strategy.setProfitFactor(1500, {"from": gov})
+#     strategy.setMaxReportDelay(86000, {"from": gov})
+
+#     starting_balance = currency.balanceOf(whale)
+
+#     decimals = currency.decimals()
+#     #print(vault.withdrawalQueue(1))
+
+#     #strat2 = Contract(vault.withdrawalQueue(1))
+
+#     currency.approve(vault, 2 ** 256 - 1, {"from": whale})
+#     currency.approve(vault, 2 ** 256 - 1, {"from": strategist})
+
+#     deposit_limit = 1_000_000_000 * (10 ** (decimals))
+#     debt_ratio = 10_000
+    
+#     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 500, {"from": gov})
+#     vault.setDepositLimit(deposit_limit, {"from": gov})
+
+#     assert deposit_limit == vault.depositLimit()
+ 
+#     whale_deposit = 1000000 * (10 ** (decimals))
+#     vault.deposit(whale_deposit, {"from": whale})
+
+#     chain.sleep(10)
+#     chain.mine(10)
+#     strategy.harvest({"from": strategist})
+   
+#     status = strategy.lendStatuses()
+#     form = "{:.2%}"
+#     formS = "{:,.0f}"
+#     for j in status:
+#         print(
+#             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)}, APR: {form.format(j[2]/1e18)}"
+#         )
+#     chain.sleep(20)
+#     chain.mine(20)
+#     hToken.mint(0, {"from": strategist})
+
+
+#     vault.updateStrategyDebtRatio(strategy, 0, {"from": gov})
+#     strategy.harvest({"from": strategist})
+#     print(hToken.balanceOf(screamPlugin))
+#     print(screamPlugin.hasAssets())
+#     chain.mine(20)
+#     hToken.mint(0, {"from": strategist})
+#     chain.mine(10)
+#     strategy.harvest({"from": strategist})
+    
+#     print(hToken.balanceOf(screamPlugin))
+#     print(screamPlugin.hasAssets())
+#     chain.mine(20)
+#     hToken.mint(0, {"from": strategist})
+
+#     chain.mine(10)
+#     chain.sleep(10)
+#     strategy.harvest({"from": strategist})
+#     print(screamPlugin.hasAssets())
+#     print(hToken.balanceOf(screamPlugin))
+#     status = strategy.lendStatuses()
+#     for j in status:
+#         print(
+#             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)}, APR: {form.format(j[2]/1e18)}"
+#         )
+#     chain.mine(20)
+#     hToken.mint(0, {"from": strategist})
+#     hToken.mint(0, {"from": strategist})
+
+#     vault.updateStrategyDebtRatio(strategy, 10_000, {"from": gov})
+#     strategy.harvest({"from": strategist})
+
+#     status = strategy.lendStatuses()
+#     for j in status:
+#         print(
+#             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)}, APR: {form.format(j[2]/1e18)}"
+#         )

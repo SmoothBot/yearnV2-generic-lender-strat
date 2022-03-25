@@ -16,10 +16,22 @@ params = [
     ),
 ]
 
+@pytest.fixture
+def router():
+    yield Contract('0xF491e7B69E4244ad4002BC14e878a34207E38c29')
+    
+@pytest.fixture
+def weth():
+    token_address = "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83"
+
+# specific addresses
+@pytest.fixture
+def usdc(interface):
+    yield interface.ERC20("0x04068DA6C83AFCFA0e13ba15A6696662335D5B75")
 
 @pytest.fixture
 def token(request, interface):
-    yield interface.ERC20(request.param)
+    yield interface.IERC20Extended(request.param)
 
 @pytest.fixture
 def scrToken(request, interface):
@@ -49,7 +61,6 @@ def hPID(request, interface):
 def lenders(request, interface):
     yield request.param
 
-
 @pytest.fixture
 def gov(accounts):
     yield accounts[3]
@@ -72,12 +83,50 @@ def strategist(accounts):
     # YFI Whale, probably
     yield accounts[2]
 
+## Price utility functions
+@pytest.fixture
+def get_path(weth):
+    def get_path(token_in, token_out):
+        is_weth = token_in == weth or token_out == weth
+        path = [0] * (2 if is_weth else 3)
+        path[0] = token_in
+        if (is_weth):
+            path[1] = token_out
+        else:
+            path[1] = weth
+            path[2] = token_out
+        return path
+    yield get_path
 
 @pytest.fixture
-def amount():
+def token_price(router, usdc, get_path):
+    def token_price(token, decimals):
+        if (token.address == usdc.address):
+            return 1
+
+        path = get_path(usdc, token)
+        price = router.getAmountsIn(10 ** decimals, path)[0]
+
+        # add the fee back on
+        if (len(path) == 2):
+            price = price * (1 - 0.002)
+        else:
+            price = price * (1 - 0.004)
+
+        return price / (10 ** usdc.decimals())
+
+    yield token_price
+
+@pytest.fixture
+def decimals(token):
+    yield token.decimals()
+
+@pytest.fixture
+def amount(token, token_price, decimals):
     ## todo - make generic
-    decimals = 6
-    yield 1000000 * 10 ** decimals
+    price = token_price(token, decimals)
+    amount = int((1000000 / price) * (10 ** token.decimals()))
+    yield amount
 
 @pytest.fixture
 def vault(gov, rewards, guardian, token, pm):
@@ -90,13 +139,6 @@ def vault(gov, rewards, guardian, token, pm):
 @pytest.fixture
 def Vault(pm):
     yield pm(config["dependencies"][0]).Vault
-
-# @pytest.fixture
-# def live_strategy(
-#     Strategy
-# ): 
-#     yield Strategy.at('0x754133e0f67CB51263d6d5F41f2dF1a58a9D36b7')
-
 
 @pytest.fixture
 def strategy(

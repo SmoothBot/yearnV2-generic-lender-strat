@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/math/Math.sol";
 
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 import "../Interfaces/HundredFinance/ILiquidHundredChef.sol";
@@ -196,7 +197,8 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         chef.emergencyWithdraw(pid, address(this));
 
         // dont care about errors here. we want to exit what we can
-        cToken.redeem(amount);
+        uint256 amountCToken = wantToCToken(amount);
+        cToken.redeem(Math.min(amountCToken, cToken.balanceOf(address(this))));
 
         // Send to governance
         want.safeTransfer(vault.governance(), want.balanceOf(address(this)));

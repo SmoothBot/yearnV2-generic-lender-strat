@@ -410,12 +410,12 @@ contract Strategy is BaseStrategy {
      */
     function adjustPosition(uint256 _debtOutstanding) internal override {
         _debtOutstanding; //ignored. we handle it in prepare return
-        //emergency exit is dealt with at beginning of harvest
+        // Emergency exit is dealt with at beginning of harvest
         if (emergencyExit) {
             return;
         }
 
-        //we just keep all money in want if we dont have any lenders
+        // Ee just keep all money in want if we dont have any lenders
         if (lenders.length == 0) {
             return;
         }
@@ -423,7 +423,7 @@ contract Strategy is BaseStrategy {
         (uint256 lowest, uint256 lowestApr, uint256 highest, uint256 potential) = estimateAdjustPosition();
 
         if (potential > lowestApr) {
-            //apr should go down after deposit so wont be withdrawing from self
+            // APR should go down after deposit so wont be withdrawing from self
             lenders[lowest].withdrawAll();
         }
 

@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/math/Math.sol";
 
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 import "../Interfaces/HundredFinance/IGuage.sol";
@@ -27,7 +28,7 @@ interface iController {
     function gauge_relative_weight(address) external view returns (uint256);
 }
 
-interface IERC20Extended {
+interface IERC20Extended is IERC20 {
     function decimals() external view returns (uint256);
 }
 
@@ -225,15 +226,18 @@ contract GenericHundredFinance is GenericLenderBase {
         return _withdraw(amount);
     }
 
-    //emergency withdraw. sends balance plus amount to governance
+    // Emergency withdraw. sends balance plus amount to governance
     function emergencyWithdraw(uint256 amount) external override management {
         uint256 amountInGauge = guage.balanceOf(address(this));
         if (amountInGauge > 0) {
             guage.withdraw(amountInGauge);
         }
+    
         //dont care about errors here. we want to exit what we can
-        cToken.redeem(amount);
+        uint256 amountCToken = convertFromUnderlying(amount);
+        cToken.redeem(Math.min(amountCToken, cToken.balanceOf(address(this))));
 
+        // Send to governance
         want.safeTransfer(vault.governance(), want.balanceOf(address(this)));
     }
 

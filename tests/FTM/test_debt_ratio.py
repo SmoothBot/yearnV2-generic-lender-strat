@@ -85,7 +85,7 @@ def run_up_down_test(
     # Set debt ratio to zero to clear out the strategy
     vault.updateStrategyDebtRatio(strategy, 0, {"from": gov})
     strategy.harvest({"from": strategist})
-    assert strategy.estimatedTotalAssets()/vault.totalAssets() < 1e-5
+    assert strategy.estimatedTotalAssets() / vault.totalAssets() < 1e-5
     print(lender.hasAssets())
     chain.mine(20)
     cToken.mint(0, {"from": strategist})

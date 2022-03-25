@@ -126,7 +126,6 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
 
     function _nav() internal view returns (uint256) {
         uint256 amount = want.balanceOf(address(this)).add(underlyingBalanceStored());
-
         if (amount < dustThreshold) {
             return 0;
         } else {
@@ -233,7 +232,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         // If we're trying to withdraw more than the total
         // Send everything we have
         if (amount.add(dustThreshold) >= total) {
-            //cant withdraw more than we own. so withdraw all we can
+            // Cant withdraw more than we own. so withdraw all we can
             if (balanceUnderlying > dustThreshold) {
                 require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "ctoken: redeemAll fail");
             }
@@ -253,7 +252,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
             return amount;
         }
 
-        // not state changing but OK because of previous call
+        // Not state changing but OK because of previous call
         uint256 liquidity = want.balanceOf(address(cToken));
         if (liquidity > 1) {
             uint256 toWithdraw = amount.sub(looseBalance);
@@ -274,7 +273,7 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
         looseBalance = want.balanceOf(address(this));
         want.safeTransfer(address(strategy), looseBalance);
 
-        //redeposit what is left
+        // Redeposit what is left
         stakeCToken(cToken.balanceOf(address(this)));
         
         return looseBalance;
@@ -338,17 +337,15 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
     }
 
     function withdrawAll() external override management returns (bool) {
-        uint256 liquidity = want.balanceOf(address(cToken));
-        uint256 liquidityInCTokens = cTokenToWant(liquidity);
         uint256 staked = cTokenStaked();
         if (staked > 0) {
             unstakeCToken(staked);
         }
-
+        uint256 liquidity = want.balanceOf(address(cToken));
+        uint256 liquidityInCTokens = wantToCToken(liquidity);
         uint256 amountInCtokens = cToken.balanceOf(address(this));
 
         bool all;
-
         if (liquidityInCTokens > 2) {
             liquidityInCTokens = liquidityInCTokens - 1;
 
@@ -357,10 +354,10 @@ contract GenericHundredFinanceLqdr is GenericLenderBase {
                 all = true;
                 cToken.redeem(amountInCtokens);
             } else {
-                //redo or else price changes
+                // redo or else price changes
                 cToken.mint(0);
                 liquidityInCTokens = cTokenToWant(want.balanceOf(address(cToken)));
-                //take all we can
+                // take all we can
                 all = false;
                 cToken.redeem(liquidityInCTokens);
             }

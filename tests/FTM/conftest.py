@@ -76,7 +76,8 @@ def strategist(accounts):
 @pytest.fixture
 def amount():
     ## todo - make generic
-    yield 10000000 * 10 ** 6
+    decimals = 6
+    yield 1000000 * 10 ** decimals
 
 @pytest.fixture
 def vault(gov, rewards, guardian, token, pm):
@@ -138,7 +139,6 @@ def lenderIB(
     strategy,
     ibToken,
     GenericIronBank,
-    
 ):    
     yield strategist.deploy(GenericIronBank, strategy, "IB", ibToken)
 

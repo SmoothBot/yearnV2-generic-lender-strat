@@ -53,6 +53,8 @@ def run_emergency_exit_test(
     lender = interface.IGenericLender(strategy.lenders(0))
     assert pytest.approx(strategy.estimatedTotalAssets(), rel=1e-5) == amount
     assert pytest.approx(lender.nav(), rel=1e-5) == amount
+    chain.sleep(1)
+    chain.mine(1)
 
     # load up the strategy and lender with capital
     strategy.harvest({"from": strategist})

@@ -7,24 +7,24 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_all(strategyAllLenders, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
-    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
+def test_normal_activity_all(strategyAllLenders, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_scream(strategyAddScream, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
-    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
+def test_normal_activity_scream(strategyAddScream, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 # @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 # def test_normal_activity_ib(strategyAddIB, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
 #     run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_hnd(strategyAddHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
-    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
+def test_normal_activity_hnd(strategyAddHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_lqdr_hnd(strategyAddLqdrHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
-    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
+def test_normal_activity_lqdr_hnd(strategyAddLqdrHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 def run_normal_activity_test(
     token,
@@ -37,7 +37,9 @@ def run_normal_activity_test(
     strategy,
     gov,
     strategist,
-    lenders
+    lenders,
+    amount,
+    decimals
 ):
     starting_balance = token.balanceOf(strategist)
 
@@ -47,19 +49,19 @@ def run_normal_activity_test(
     debt_ratio = 10_000
     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 1000, {"from": gov})
 
-    whale_deposit = 100000 * 1e6
+    whale_deposit = amount
     vault.deposit(whale_deposit, {"from": whale})
     chain.sleep(1)
     chain.mine(1)
     strategy.setWithdrawalThreshold(0, {"from": gov})
-    assert strategy.harvestTrigger(1 * 1e18) == True
+    assert strategy.harvestTrigger(1) == True
     print(whale_deposit / 1e18)
     status = strategy.lendStatuses()
     form = "{:.2%}"
     formS = "{:,.0f}"
     for j in status:
         print(
-            f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)} APR: {form.format(j[2]/1e18)}"
+            f"Lender: {j[0]}, Deposits: {formS.format(j[1]/(10 ** decimals))} APR: {form.format(j[2]/1e18)}"
         )
 
     strategy.harvest({"from": strategist})
@@ -69,7 +71,7 @@ def run_normal_activity_test(
     formS = "{:,.0f}"
     for j in status:
         print(
-            f"Lender: {j[0]}, Deposits: {formS.format(j[1]/1e6)} APR: {form.format(j[2]/1e18)}"
+            f"Lender: {j[0]}, Deposits: {formS.format(j[1]/(10 ** decimals))} APR: {form.format(j[2]/1e18)}"
         )
     startingBalance = vault.totalAssets()
     for i in range(4):

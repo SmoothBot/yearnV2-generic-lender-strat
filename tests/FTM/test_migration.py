@@ -1,6 +1,6 @@
 import brownie
 import pytest
-from brownie import ZERO_ADDRESS
+from brownie import ZERO_ADDRESS, interface
 import conftest as config
 
 
@@ -108,13 +108,14 @@ def test_bad_migration(
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_migrated_strategy_can_call_harvest(
-    token, strategy, strategyAllLenders, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
-):    
+    token, strategy, strategyAllLenders, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain, lenders, scrToken, ibToken, hToken
+):
     # add strat and deploy capital to vault
     token.approve(vault, 2 ** 256 - 1, {"from": whale})
     vault.addStrategy(strategy, 10000, 0, 2 ** 256 - 1, 500, {"from": gov})
     vault.deposit(amount, {"from": whale})
-    chain.sleep(1)
+    chain.mine(10)
+    chain.sleep(10)
     strategy.harvest({"from": strategist})
 
     # Deploy new strategy and migrate
@@ -125,7 +126,12 @@ def test_migrated_strategy_can_call_harvest(
     token.transfer(strategy, 10 ** token.decimals(), {"from": whale})
 
     assert vault.strategies(strategy).dict()["totalGain"] == 0
-    chain.sleep(1)
+    chain.mine(10)
+    chain.sleep(10)
+
+    for i in range(strategy.numLenders()):
+        interface.IGenericLenderExt(strategy.lenders(i)).setDustThreshold(0, {'from':strategist})
+    
     strategy.harvest({"from": gov})
     assert vault.strategies(strategy).dict()["totalGain"] >= 10 ** token.decimals()
 

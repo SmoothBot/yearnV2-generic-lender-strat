@@ -50,6 +50,8 @@ contract GenericHundredFinance is GenericLenderBase {
     address public constant spiritRouter = address(0x16327E3FbDaCA3bcF7E38F5Af2599D2DDc33aE52);
     address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
+    // Scale we multiply the APR by because the contract isn't boosted.
+    uint256 public aprScale = 40;
     IGuage public guage;
     address public minter;
     address public rewards_policy;
@@ -110,6 +112,12 @@ contract GenericHundredFinance is GenericLenderBase {
         dustThreshold = amount;
     }
 
+    //adjust dust threshol
+    function setAPRScalar(uint256 scale) external management {
+        require(scale >= 0 && scale <= 100, "!invalid scale");
+        aprScale = scale;
+    }
+
     function setGuage(address _guage) external govOnly {
         guage = IGuage(_guage);
         _setupSecondaryContract();
@@ -162,48 +170,35 @@ contract GenericHundredFinance is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        return (cToken.supplyRatePerBlock().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
+        return (cToken.supplyRatePerBlock().add(guageAPR(0)));
     }
 
-    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
+    function guageAPR(uint256 change) public view returns (uint256) {
         if (ignorePrinting || minter == address(0)) {
             return 0;
         }
+
         uint256 guage_weight = iController(controller).gauge_relative_weight(address(guage));
-        uint256 guage_working_supply = guage.working_supply();
+        uint256 guage_working_supply = guage.working_supply().mul(cToken.exchangeRateStored()).div(1e18);
+        guage_working_supply = guage_working_supply.add(change);
         if (guage_working_supply == 0) {
             return 0;
         }
 
-        //we scale change by 0.4 because we have no veHND
-        change = change.mul(40).div(100);
-        if (add) {
-            guage_working_supply = guage_working_supply.add(change);
-        } else {
-            guage_working_supply = guage_working_supply.sub(change);
-        }
-
         uint256 rewards_rate = iRewardsPolicy(rewards_policy).rate_at(block.timestamp);
-
-        uint256 referenceStake = (10000 * 1e18) / cToken.exchangeRateStored();
-        referenceStake = referenceStake.mul(40).div(100);
-
         uint256 exchangeRate = priceCheck(hnd, address(want), 1e18);
-
-        // scale down by 0.4 to represent our no veHND
-        //uint256 per_second = referenceStake.mul(rewards_rate).mul(guage_weight).div(guage_working_supply).mul(40).div(100);
-        uint256 per_second = guage_weight.mul(rewards_rate).mul(referenceStake).div(guage_working_supply.add(referenceStake)).div(10_000);
-
-        //uint256 estimatedWant =  priceCheck(hnd, address(want),per_second);
+        uint256 per_year = blocksPerYear.mul(rewards_rate).mul(guage_weight).div(1e18);
         uint256 compRate;
-        if (per_second != 0) {
-            compRate = per_second.mul(exchangeRate).div(1e18);
+        if (per_year != 0) {
+            compRate = per_year.mul(exchangeRate).div(guage_working_supply);
+            // scale by aprScale % because we have no veHND
+            compRate = compRate.mul(aprScale).div(100);
         }
 
         return (compRate);
     }
 
-    //WARNING. manipulatable and simple routing. Only use for safe functions
+    // WARNING. manipulatable and simple routing. Only use for safe functions
     function priceCheck(
         address start,
         address end,
@@ -408,7 +403,7 @@ contract GenericHundredFinance is GenericLenderBase {
 
         //the supply rate is derived from the borrow rate, reserve factor and the amount of total borrows.
         uint256 supplyRate = model.getSupplyRate(cashPrior.add(amount), borrows, reserves, reserverFactor);
-        supplyRate = supplyRate.add(compBlockShareInWant(amount, true));
+        supplyRate = supplyRate.add(guageAPR(amount));
 
         return supplyRate.mul(blocksPerYear);
     }

@@ -28,3 +28,7 @@ interface IGenericLender {
 
     function sweep(address _token) external;
 }
+
+interface IGenericLenderExt is IGenericLender {
+    function setDustThreshold(uint256 _dust) external;
+}

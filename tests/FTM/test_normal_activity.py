@@ -14,9 +14,9 @@ def test_normal_activity_all(strategyAllLenders, token, scrToken, ibToken, hToke
 def test_normal_activity_scream(strategyAddScream, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
     run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
-# @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-# def test_normal_activity_ib(strategyAddIB, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
-#     run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_ib(strategyAddIB, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders):
+    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_hnd(strategyAddHND, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):

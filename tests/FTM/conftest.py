@@ -171,7 +171,7 @@ def decimals(token):
 def amount(token, token_price, decimals):
     ## todo - make generic
     price = token_price(token, decimals)
-    amount = int((100000 / price) * (10 ** token.decimals()))
+    amount = int((1000000 / price) * (10 ** token.decimals()))
     print(amount)
     yield amount
 

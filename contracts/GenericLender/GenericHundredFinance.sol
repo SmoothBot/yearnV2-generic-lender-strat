@@ -51,7 +51,7 @@ contract GenericHundredFinance is GenericLenderBase {
     address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
     // Scale we multiply the APR by because the contract isn't boosted.
-    uint256 public aprScale = 40;
+    uint256 public aprScale = 66;
     IGuage public guage;
     address public minter;
     address public rewards_policy;

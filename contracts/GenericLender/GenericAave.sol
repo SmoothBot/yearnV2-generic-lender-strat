@@ -30,7 +30,7 @@ contract GenericAave is GenericLenderBase {
     using Address for address;
     using SafeMath for uint256;
 
-    IProtocolDataProvider public constant protocolDataProvider = IProtocolDataProvider(address(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d));
+    IProtocolDataProvider public constant protocolDataProvider = IProtocolDataProvider(address(0x7551b5D2763519d4e37e8B81929D336De671d46d));
     IAToken public aToken;
     IStakedAave public constant stkAave = IStakedAave(0x4da27a545c0c5B758a6BA100e3a049001de870f5);
 
@@ -40,11 +40,11 @@ contract GenericAave is GenericLenderBase {
     uint16 internal constant DEFAULT_REFERRAL = 179; // jmonteer's referral code
     uint16 internal customReferral;
 
-    address public constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    address public constant WETH = address(0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270);
 
-    address public constant AAVE = address(0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9);
+    address public constant AAVE = address(0xD6DF932A45C0f255f85145f286eA0b292B21C90B);
 
-    IUniswapV2Router02 public constant router = IUniswapV2Router02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+    IUniswapV2Router02 public constant router = IUniswapV2Router02(address(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff));
 
     uint256 internal constant SECONDS_IN_YEAR = 365 days;
 
@@ -230,8 +230,8 @@ contract GenericAave is GenericLenderBase {
         );
         isIncentivised = _isIncentivised;
         aToken = _aToken;
-        require(_lendingPool().getReserveData(address(want)).aTokenAddress == address(_aToken), "WRONG ATOKEN");
-        IERC20(address(want)).safeApprove(address(_lendingPool()), type(uint256).max);
+        // require(_lendingPool().getReserveData(address(want)).aTokenAddress == address(_aToken), "WRONG ATOKEN");
+        // IERC20(address(want)).safeApprove(address(_lendingPool()), type(uint256).max);
     }
 
     function _nav() internal view returns (uint256) {
@@ -378,12 +378,7 @@ contract GenericAave is GenericLenderBase {
         }
     }
 
-    function protectedTokens() internal view override returns (address[] memory) {
-        address[] memory protected = new address[](2);
-        protected[0] = address(want);
-        protected[1] = address(aToken);
-        return protected;
-    }
+    function protectedTokens() internal view override returns (address[] memory _protected) { }
 
     modifier keepers() {
         require(

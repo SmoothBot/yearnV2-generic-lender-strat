@@ -1,12 +1,14 @@
 import pytest
 from brownie import Wei, config, Contract, accounts
 
-fixtures = "token", "aToken", "lenders", "whale"
+fixtures = "token", "aToken", "hToken", "hGuage", "lenders", "whale"
 params = [
     pytest.param( # USDC
         "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", # token
         "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F", # aToken
-        ['AAVE'],
+        "0x607312a5C671D0C511998171e634DE32156e69d0", # hToken
+        "0xB11C769e66f1ECEA06B5c30154B880200Bf57C25", # HND Gauge
+        ['AAVE', 'HND'],
         "0x1205f31718499dBf1fCa446663B532Ef87481fe1", # whale
         id="USDC Generic Lender",
     )
@@ -19,6 +21,10 @@ def router():
 @pytest.fixture
 def weth():
     yield "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+    
+@pytest.fixture
+def hnd():
+    yield "0x10010078a54396F62c96dF8532dc2B4847d47ED3"
 
 # specific addresses
 @pytest.fixture
@@ -35,6 +41,17 @@ def aToken(request, interface):
         yield ''
     else:
         yield request.param
+
+@pytest.fixture
+def hToken(request, interface):
+    if request.param == '':
+        yield ''
+    else:
+        yield interface.CErc20I(request.param)
+
+@pytest.fixture
+def hGuage(request, interface):
+    yield request.param
 
 @pytest.fixture
 def lenders(request, interface):
@@ -150,10 +167,27 @@ def lenderAAVE(
     else: 
         yield ''
 
+@pytest.fixture
+def lenderHND(
+    strategist,
+    strategy,
+    hToken,
+    hGuage,
+    weth, 
+    router,
+    hnd,
+    GenericHundredFinance,
+    lenders
+):
+    if 'HND' in lenders:
+        yield strategist.deploy(GenericHundredFinance, strategy, "HundredFinance", hToken, hGuage, weth, router, hnd)
+    else: 
+        yield ''
+
 # Function scoped isolation fixture to enable xdist.
 # Snapshots the chain before each test and reverts after test completion.
 @pytest.fixture(scope="function", autouse=True)
-def shared_setup(fn_isolation, lenders, aToken):
+def shared_setup(fn_isolation, lenders, aToken, hToken, hGuage):
     pass
 
 @pytest.fixture
@@ -165,12 +199,16 @@ def strategyAllLenders(
     strategy,
     gov,
     lenderAAVE,
+    lenderHND,
     lenders,
     dust
 ):
     if 'AAVE' in lenders:
         # lenderAAVE.setDustThreshold(dust, {'from': gov})
         strategy.addLender(lenderAAVE, {'from': gov})
+    if 'HND' in lenders:
+        lenderHND.setDustThreshold(dust, {'from': gov})
+        strategy.addLender(lenderHND, {'from': gov})
     assert strategy.numLenders() == len(lenders)
 
 @pytest.fixture
@@ -185,6 +223,20 @@ def strategyAddAAVE(
         pytest.skip()
     strategy.addLender(lenderAAVE, {'from': gov})
     # lenderAAVE.setDustThreshold(dust, {'from': gov})
+    assert strategy.numLenders() == 1
+
+@pytest.fixture
+def strategyAddHND(
+    strategy,
+    gov,
+    lenderHND,
+    lenders,
+    dust
+):
+    if 'HND' not in lenders:
+        pytest.skip()
+    strategy.addLender(lenderHND, {'from': gov})
+    lenderHND.setDustThreshold(dust, {'from': gov})
     assert strategy.numLenders() == 1
 
     

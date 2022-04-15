@@ -7,15 +7,20 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_all(strategyAllLenders, token, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+def test_normal_activity_all(strategyAllLenders, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
-# @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-# def test_normal_activity_scream(strategyAddScream, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-#     run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_aave(strategyAddAAVE, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_hnd(strategyAddHND, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 def run_normal_activity_test(
     token,
+    hToken,
     chain,
     whale,
     vault,
@@ -66,12 +71,8 @@ def run_normal_activity_test(
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
-        # if 'Scream' in lenders:
-        #     scrToken.mint(0,{"from": whale})
-        # if 'IB' in lenders:
-        #     ibToken.mint(0,{"from": whale})
-        # if 'HND' in lenders:
-        #     hToken.mint(0,{"from": whale})
+        if 'HND' in lenders:
+            hToken.mint(0,{"from": whale})
         strategy.harvest({"from": strategist})
 
         # genericStateOfStrat(strategy, currency, vault)

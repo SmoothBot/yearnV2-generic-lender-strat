@@ -10,11 +10,17 @@ def test_good_migration_all(
 ):
     run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
 
-# @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-# def test_good_migration_aave(
-#     token, strategy, strategyAddAAVE, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
-# ):
-#     run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_good_migration_aave(
+    token, strategy, strategyAddAAVE, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
+):
+    run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_good_migration_hnd(
+    token, strategy, strategyAddHND, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
+):
+    run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
 
 def run_good_migration_test(
     token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain

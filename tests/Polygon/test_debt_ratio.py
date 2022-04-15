@@ -11,9 +11,16 @@ import conftest as config
 def test_up_down_aave(strategyAddAAVE, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
     if 'AAVE' not in lenders:
         pytest.skip()
-    run_up_down_test(token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
+    run_up_down_test(None, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_up_down_hnd(strategyAddHND, lenders, hToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
+    if 'HND' not in lenders:
+        pytest.skip()
+    run_up_down_test(hToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
 
 def run_up_down_test(
+    cToken,
     token,
     chain,
     whale,
@@ -65,7 +72,8 @@ def run_up_down_test(
         )
     chain.sleep(20)
     chain.mine(20)
-    # cToken.mint(0, {"from": strategist})
+    if (cToken is not None):
+        cToken.mint(0, {"from": strategist})
 
     # Set debt ratio to zero to clear out the strategy
     vault.updateStrategyDebtRatio(strategy, 0, {"from": gov})
@@ -73,14 +81,16 @@ def run_up_down_test(
     assert strategy.estimatedTotalAssets() / vault.totalAssets() < 1e-5
     print(lender.hasAssets())
     chain.mine(20)
-    # cToken.mint(0, {"from": strategist})
+    if (cToken is not None):
+        cToken.mint(0, {"from": strategist})
     chain.mine(20)
     chain.sleep(20)
     strategy.harvest({"from": strategist})
     
     print(lender.hasAssets())
     chain.mine(20)
-    # cToken.mint(0, {"from": strategist})
+    if (cToken is not None):
+        cToken.mint(0, {"from": strategist})
 
     chain.mine(20)
     chain.sleep(20)
@@ -92,7 +102,8 @@ def run_up_down_test(
             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/(10 ** decimals))}, APR: {form.format(j[2]/1e18)}"
         )
     chain.mine(20)
-    # cToken.mint(0, {"from": strategist})
+    if (cToken is not None):
+        cToken.mint(0, {"from": strategist})
     chain.sleep(20)
 
     vault.updateStrategyDebtRatio(strategy, 10_000, {"from": gov})

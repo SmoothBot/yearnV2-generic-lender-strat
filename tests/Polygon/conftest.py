@@ -2,6 +2,8 @@ import pytest
 from brownie import Wei, config, Contract, accounts
 
 fixtures = "token", "aToken", "hToken", "hGuage", "lenders", "whale"
+# https://docs.hundred.finance/developers/protocol-contracts/polygon
+# https://docs.aave.com/developers/deployed-contracts/v3-mainnet/polygon
 params = [
     pytest.param( # USDC
         "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", # token
@@ -11,6 +13,33 @@ params = [
         ['AAVE', 'HND'],
         "0x1205f31718499dBf1fCa446663B532Ef87481fe1", # whale
         id="USDC Generic Lender",
+    ),
+    pytest.param( # USDT
+        "0xc2132d05d31c914a87c6611c10748aeb04b58e8f", # token
+        "0x6ab707Aca953eDAeFBc4fD23bA73294241490620", # aToken
+        "0x103f2CA2148B863942397dbc50a425cc4f4E9A27", # hToken
+        "0x274E94f03AC51779D14bD45aF77C0e0e9d97cef9", # HND Gauge
+        ['AAVE', 'HND'],
+        "0x72a53cdbbcc1b9efa39c834a540550e23463aacb", # whale
+        id="USDT Generic Lender",
+    ),
+    pytest.param( # WETH
+        "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", # token
+        "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", # aToken
+        "0x243E33aa7f6787154a8E59d3C27a66db3F8818ee", # hToken
+        "", # HND Gauge
+        ['AAVE', 'HND'],
+        "0x72a53cdbbcc1b9efa39c834a540550e23463aacb", # whale
+        id="WETH Generic Lender",
+    ),
+    pytest.param( # WBTC
+        "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", # token
+        "0x078f358208685046a11C85e8ad32895DED33A249", # aToken
+        "0xb4300e088a3AE4e624EE5C71Bc1822F68BB5f2bc", # hToken
+        "0x0000000000000000000000000000000000000000", # HND Gauge
+        ['AAVE', 'HND'],
+        "0xdc9232e2df177d7a12fdff6ecbab114e2231198d", # whale
+        id="WBTC Generic Lender",
     )
 ]
 
@@ -83,6 +112,7 @@ def strategist(accounts):
 @pytest.fixture
 def get_path(weth):
     def get_path(token_in, token_out):
+
         is_weth = token_in == weth or token_out == weth
         path = [0] * (2 if is_weth else 3)
         path[0] = token_in

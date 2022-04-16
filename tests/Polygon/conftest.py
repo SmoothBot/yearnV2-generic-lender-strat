@@ -28,7 +28,7 @@ params = [
         "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", # aToken
         "0x243E33aa7f6787154a8E59d3C27a66db3F8818ee", # hToken
         "", # HND Gauge
-        ['AAVE', 'HND'],
+        ['AAVE'],
         "0x72a53cdbbcc1b9efa39c834a540550e23463aacb", # whale
         id="WETH Generic Lender",
     ),
@@ -36,8 +36,8 @@ params = [
         "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", # token
         "0x078f358208685046a11C85e8ad32895DED33A249", # aToken
         "0xb4300e088a3AE4e624EE5C71Bc1822F68BB5f2bc", # hToken
-        "0x0000000000000000000000000000000000000000", # HND Gauge
-        ['AAVE', 'HND'],
+        "", # HND Gauge
+        ['AAVE'],
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d", # whale
         id="WBTC Generic Lender",
     )

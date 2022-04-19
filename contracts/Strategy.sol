@@ -33,8 +33,8 @@ contract Strategy is BaseStrategy {
     using Address for address;
     using SafeMath for uint256;
 
-    address public constant uniswapRouter = 0xF491e7B69E4244ad4002BC14e878a34207E38c29;
-    address public constant weth = 0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83;
+    address public uniswapRouter; //= 0xF491e7B69E4244ad4002BC14e878a34207E38c29;
+    address public weth; // = 0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83;
     uint256 public withdrawalThreshold = 1e16;
     uint256 public constant SECONDSPERYEAR = 31556952;
 
@@ -44,19 +44,23 @@ contract Strategy is BaseStrategy {
 
     event Cloned(address indexed clone);
 
-    constructor(address _vault) public BaseStrategy(_vault) {
+    constructor(address _vault, address _weth, address _uniswapRouter) public BaseStrategy(_vault) {
+        uniswapRouter = _uniswapRouter;
+        weth = _weth;
         debtThreshold = 100 * 1e18;
     }
 
-    function clone(address _vault) external returns (address newStrategy) {
-        newStrategy = this.clone(_vault, msg.sender, msg.sender, msg.sender);
+    function clone(address _vault, address _weth, address _keeper) external returns (address newStrategy) {
+        newStrategy = this.clone(_vault, msg.sender, msg.sender, msg.sender, _weth, _keeper);
     }
 
     function clone(
         address _vault,
         address _strategist,
         address _rewards,
-        address _keeper
+        address _keeper,
+        address _weth,
+        address _router
     ) external returns (address newStrategy) {
         // Copied from https://github.com/optionality/clone-factory/blob/master/contracts/CloneFactory.sol
         bytes20 addressBytes = bytes20(address(this));
@@ -70,7 +74,7 @@ contract Strategy is BaseStrategy {
             newStrategy := create(0, clone_code, 0x37)
         }
 
-        Strategy(newStrategy).initialize(_vault, _strategist, _rewards, _keeper);
+        Strategy(newStrategy).initialize(_vault, _strategist, _rewards, _keeper, _weth, _router);
 
         emit Cloned(newStrategy);
     }
@@ -79,8 +83,12 @@ contract Strategy is BaseStrategy {
         address _vault,
         address _strategist,
         address _rewards,
-        address _keeper
+        address _keeper,
+        address _weth,
+        address _router
     ) external virtual {
+        weth = _weth;
+        uniswapRouter = _router;
         _initialize(_vault, _strategist, _rewards, _keeper);
     }
 
@@ -567,7 +575,7 @@ contract Strategy is BaseStrategy {
         //If there is and profit potential is worth changing then lets do it
         (uint256 lowest, uint256 lowestApr, , uint256 potential) = estimateAdjustPosition();
 
-        //if protential > lowestApr it means we are changing horses
+        // if protential > lowestApr it means we are changing horses
         if (potential > lowestApr) {
             uint256 nav = lenders[lowest].nav();
 

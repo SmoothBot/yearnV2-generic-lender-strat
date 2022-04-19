@@ -196,8 +196,8 @@ def strategy(
     Strategy,
     GenericScream,
     GenericIronBank,
-    GenericHundredFinance,
-    GenericHundredFinanceLqdr,
+    HundredFinanceFantom,
+    HundredFinanceFantomLqdr,
     fn_isolation
 ):
     strategy = strategist.deploy(Strategy, vault)
@@ -237,11 +237,11 @@ def lenderHND(
     strategy,
     hToken,
     hGuage,
-    GenericHundredFinance,
+    HundredFinanceFantom,
     lenders
 ):
     if 'HND' in lenders:
-        yield strategist.deploy(GenericHundredFinance, strategy, "Hundred Finance", hToken, hGuage)
+        yield strategist.deploy(HundredFinanceFantom, strategy, "Hundred Finance", hToken, hGuage)
     else: 
         yield ''
 
@@ -253,11 +253,11 @@ def lenderLqdrHND(
     hGuage,
     hChef,
     hPID,
-    GenericHundredFinanceLqdr,
+    HundredFinanceFantomLqdr,
     lenders
 ):
     if 'LqdrHND' in lenders:
-        yield strategist.deploy(GenericHundredFinanceLqdr, strategy, "Hundred Finance Lqdr", hToken, hGuage, hChef, hPID)
+        yield strategist.deploy(HundredFinanceFantomLqdr, strategy, "Hundred Finance Lqdr", hToken, hGuage, hChef, hPID)
     else: 
         yield ''
     

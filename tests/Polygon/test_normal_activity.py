@@ -1,5 +1,5 @@
 from itertools import count
-from brownie import Wei, reverts, Contract
+from brownie import Wei, reverts, Contract, GenericHundredFinance
 from useful_methods import genericStateOfVault, genericStateOfStrat
 import random
 import brownie
@@ -73,6 +73,9 @@ def run_normal_activity_test(
         print(f'\n----harvest----')
         if 'HND' in lenders:
             hToken.mint(0,{"from": whale})
+            # TODO - Remove when HND re-introduce a normal interest rate model
+            lender = GenericHundredFinance.at(strategy.lenders(0))
+            lender.manualHarvest({'from': strategist})
         strategy.harvest({"from": strategist})
 
         # genericStateOfStrat(strategy, currency, vault)

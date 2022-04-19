@@ -575,7 +575,7 @@ contract Strategy is BaseStrategy {
         //If there is and profit potential is worth changing then lets do it
         (uint256 lowest, uint256 lowestApr, , uint256 potential) = estimateAdjustPosition();
 
-        //if protential > lowestApr it means we are changing horses
+        // if protential > lowestApr it means we are changing horses
         if (potential > lowestApr) {
             uint256 nav = lenders[lowest].nav();
 

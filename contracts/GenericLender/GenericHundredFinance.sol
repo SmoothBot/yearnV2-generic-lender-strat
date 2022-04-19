@@ -94,7 +94,7 @@ contract GenericHundredFinance is GenericLenderBase {
         cToken.approve(_guage, uint256(-1));
         IERC20(hnd).safeApprove(router, uint256(-1));
         // IERC20(weth).safeApprove(router, uint256(-1));
-        dustThreshold = 1_000_000_000; //depends on want
+        dustThreshold = 1_000_000_000; // depends on want
     }
 
     function cloneCompoundLender(
@@ -288,6 +288,7 @@ contract GenericHundredFinance is GenericLenderBase {
                 require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
             }
         }
+    
         if (!ignorePrinting) {
             _disposeOfComp();
         }
@@ -303,6 +304,10 @@ contract GenericHundredFinance is GenericLenderBase {
 
     function manualClaimAndDontSell() external management {
         iMinter(minter).mint(address(guage));
+    }
+
+    function manualHarvest() external management {
+        _disposeOfComp();
     }
 
     // Spookyswap is best for hnd/weth. we check if there is a better path for the second lot

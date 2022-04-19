@@ -4,43 +4,62 @@ from brownie import Wei, config, Contract, accounts
 fixtures = "token", "aToken", "hToken", "hGuage", "lenders", "whale"
 # https://docs.hundred.finance/developers/protocol-contracts/polygon
 # https://docs.aave.com/developers/deployed-contracts/v3-mainnet/polygon
+# gauge controller: https://polygonscan.com/address/0xf191d17dee9943f06bb784c0492805280aee0bf9#readContract
 params = [
     pytest.param( # USDC
         "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", # token
         "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F", # aToken
         "0x607312a5C671D0C511998171e634DE32156e69d0", # hToken
         "0xB11C769e66f1ECEA06B5c30154B880200Bf57C25", # HND Gauge
-        ['AAVE', 'HND'],
+        ['HND'],
         "0x1205f31718499dBf1fCa446663B532Ef87481fe1", # whale
         id="USDC Generic Lender",
     ),
     pytest.param( # USDT
         "0xc2132d05d31c914a87c6611c10748aeb04b58e8f", # token
-        "0x6ab707Aca953eDAeFBc4fD23bA73294241490620", # aToken
+        "", # aToken
         "0x103f2CA2148B863942397dbc50a425cc4f4E9A27", # hToken
-        "0x274E94f03AC51779D14bD45aF77C0e0e9d97cef9", # HND Gauge
-        ['AAVE', 'HND'],
+        "0x65116121a48BEC43f855e278DC3e2157f1132eD8", # HND Gauge
+        ['HND'],
         "0x72a53cdbbcc1b9efa39c834a540550e23463aacb", # whale
         id="USDT Generic Lender",
     ),
-    pytest.param( # WETH
-        "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", # token
-        "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", # aToken
-        "0x243E33aa7f6787154a8E59d3C27a66db3F8818ee", # hToken
-        "", # HND Gauge
-        ['AAVE'],
-        "0x72a53cdbbcc1b9efa39c834a540550e23463aacb", # whale
-        id="WETH Generic Lender",
+    pytest.param( # DAI
+        "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063", # token
+        "", # aToken
+        "0xE4e43864ea18d5E5211352a4B810383460aB7fcC", # hToken
+        "0x5734BB74cFac69f1c34bA66eA6608cCdEe6b81F2", # HND Gauge
+        ['HND'],
+        "0xBA12222222228d8Ba445958a75a0704d566BF2C8", # whale
+        id="USDT Generic Lender",
     ),
-    pytest.param( # WBTC
-        "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", # token
-        "0x078f358208685046a11C85e8ad32895DED33A249", # aToken
-        "0xb4300e088a3AE4e624EE5C71Bc1822F68BB5f2bc", # hToken
-        "", # HND Gauge
-        ['AAVE'],
-        "0xdc9232e2df177d7a12fdff6ecbab114e2231198d", # whale
-        id="WBTC Generic Lender",
-    )
+    pytest.param( # FRAX
+        "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89", # token
+        "", # aToken
+        "0x2c7a9d9919f042C4C120199c69e126124d09BE7c", # hToken
+        "0xbE7CA18470B4AB61741bC2dcad50B1D4052b6b04", # HND Gauge
+        ['HND'],
+        "0xdc546C7CDEbCef7C2123500328feeE15f67F330e", # whale
+        id="USDT Generic Lender",
+    ),
+    # pytest.param( # WETH
+    #     "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", # token
+    #     "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", # aToken
+    #     "", # hToken
+    #     "", # HND Gauge
+    #     ['AAVE'],
+    #     "0x72a53cdbbcc1b9efa39c834a540550e23463aacb", # whale
+    #     id="WETH Generic Lender",
+    # ),
+    # pytest.param( # WBTC
+    #     "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", # token
+    #     "0x078f358208685046a11C85e8ad32895DED33A249", # aToken
+    #     "", # hToken
+    #     "", # HND Gauge
+    #     ['AAVE'],
+    #     "0xdc9232e2df177d7a12fdff6ecbab114e2231198d", # whale
+    #     id="WBTC Generic Lender",
+    # )
 ]
 
 @pytest.fixture
@@ -48,12 +67,12 @@ def router():
     yield Contract('0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff')
     
 @pytest.fixture
-def weth():
-    yield "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+def weth(interface):
+    yield interface.ERC20("0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270")
     
 @pytest.fixture
-def hnd():
-    yield "0x10010078a54396F62c96dF8532dc2B4847d47ED3"
+def hnd(interface):
+    yield interface.ERC20("0x10010078a54396F62c96dF8532dc2B4847d47ED3")
 
 # specific addresses
 @pytest.fixture
@@ -151,7 +170,7 @@ def decimals(token):
 def amount(token, token_price, decimals):
     ## todo - make generic
     price = token_price(token, decimals)
-    amount = int((1000000 / price) * (10 ** token.decimals()))
+    amount = int((100000 / price) * (10 ** token.decimals()))
     print(amount)
     yield amount
 

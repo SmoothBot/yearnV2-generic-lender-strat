@@ -9,6 +9,7 @@ struct GenericLenderParameters {
     //These parameters changes for every different protocol
     address _comp;
     string _name;
+    bool _ignorePrinting;
     //These parameters changes for every different token/strategy
     address _cToken;
     address _strategy;

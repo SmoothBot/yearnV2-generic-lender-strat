@@ -13,16 +13,11 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./GenericLenderBase.sol";
-
+// TODO check that this has all the methods required from Strategy.sol
 contract GenericWithParameters is GenericLenderBase {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
-
-    // uint256 private constant blocksPerYear = 2_300_000;
-    // address public constant uniswapRouter = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-    // address public constant comp = address(0xc00e94Cb662C3520282E6f5717214004A7f26888);
-    // address public constant weth = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     uint256 private immutable blocksPerYear;
     address public immutable uniswapRouter;
@@ -33,6 +28,8 @@ contract GenericWithParameters is GenericLenderBase {
 
     CErc20I public cToken;
 
+    bool public ignorePrinting;
+
     constructor(
         GenericLenderParameters memory params
     ) public GenericLenderBase(params._strategy, params._name) {
@@ -40,6 +37,7 @@ contract GenericWithParameters is GenericLenderBase {
         uniswapRouter = params._uniswapRouter;
         comp = params._comp;
         weth = params._weth;
+        ignorePrinting = params._ignorePrinting;
         _initialize(params._cToken);
     }
 
@@ -138,7 +136,9 @@ contract GenericWithParameters is GenericLenderBase {
                 require(cToken.redeemUnderlying(liquidity) == 0, "ctoken: redeemUnderlying fail");
             }
         }
-        _disposeOfComp();
+        if(!ignorePrinting) {
+            _disposeOfComp();
+        }
         looseBalance = want.balanceOf(address(this));
         want.safeTransfer(address(strategy), looseBalance);
         return looseBalance;
@@ -188,6 +188,10 @@ contract GenericWithParameters is GenericLenderBase {
         uint256 supplyRate = model.getSupplyRate(cashPrior.add(amount), borrows, reserves, reserverFactor);
 
         return supplyRate.mul(blocksPerYear);
+    }
+
+    function setIgnorePrinting(bool _ignorePrinting) external management {
+        ignorePrinting = _ignorePrinting;
     }
 
     function protectedTokens() internal view override returns (address[] memory) {

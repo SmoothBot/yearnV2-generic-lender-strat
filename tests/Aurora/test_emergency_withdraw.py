@@ -7,16 +7,11 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_emergency_exit_aave(strategyAddAAVE, lenders, token, chain, whale, vault, strategy, gov, strategist, amount):
-    if 'AAVE' not in lenders:
+def test_emergency_exit_aave(strategyAddAURI, lenders, token, chain, whale, vault, strategy, gov, strategist, amount):
+    if 'AURI' not in lenders:
         pytest.skip()
     run_emergency_exit_test(token, chain, whale, vault, strategy, gov, strategist, amount)
 
-@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_emergency_exit_aave(strategyAddHND, lenders, token, chain, whale, vault, strategy, gov, strategist, amount):
-    if 'HND' not in lenders:
-        pytest.skip()
-    run_emergency_exit_test(token, chain, whale, vault, strategy, gov, strategist, amount)
 
 def run_emergency_exit_test(
     token,

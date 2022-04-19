@@ -1,5 +1,5 @@
 import pytest
-from brownie import Wei, config, Contract, accounts
+from brownie import Wei, config, Contract, accounts, interface
 
 fixtures = "token", "auToken", "lenders", "whale"
 # https://docs.aurigami.finance/public/protocol/contract-addresses
@@ -7,71 +7,66 @@ params = [
     pytest.param( # USDC
         "0xB12BFcA5A55806AaF64E99521918A4bf0fC40802", # token
         "0x4f0d864b1ABf4B701799a0b30b57A22dFEB5917b", # auToken
-        ['AUR'],
+        ['AURI'],
         "0x8e9fb3f2cc8b08184cb5fb7bcdc61188e80c3cb0", # whale
         id="USDC Generic Lender",
     ),
-    pytest.param( # USDT
-        "0x4988a896b1227218e4A686fdE5EabdcAbd91571f", # token
-        "0xaD5A2437Ff55ed7A8Cad3b797b3eC7c5a19B1c54", # auToken
-        ['AUR'],
-        "0xcEf6C2e20898C2604886b888552CA6CcF66933B0", # whale
-        id="USDT Generic Lender",
-    ),
+    # pytest.param( # USDT
+    #     "0x4988a896b1227218e4A686fdE5EabdcAbd91571f", # token
+    #     "0xaD5A2437Ff55ed7A8Cad3b797b3eC7c5a19B1c54", # auToken
+    #     ['AURI'],
+    #     "0xcEf6C2e20898C2604886b888552CA6CcF66933B0", # whale
+    #     id="USDT Generic Lender",
+    # ),
     # pytest.param( # ETH -> this must use EthCompound, test separately?
     #     "", # token
     #     "0xca9511B610bA5fc7E311FDeF9cE16050eE4449E9", # auToken
-    #     ['AUR'],
+    #     ['AURI'],
     #     "", # whale
     #     id="Eth Lender",
     # ),
-    pytest.param( # WBTC
-        "0xF4eB217Ba2454613b15dBdea6e5f22276410e89e", # token
-        "0xCFb6b0498cb7555e7e21502E0F449bf28760Adbb", # auToken
-        ['AUR'],
-        "0x871ea9aF361ec1104489Ed96438319b46E5FB4c6", # whale
-        id="WBTC Generic Lender",
-    )
+    # pytest.param( # WBTC
+    #     "0xF4eB217Ba2454613b15dBdea6e5f22276410e89e", # token
+    #     "0xCFb6b0498cb7555e7e21502E0F449bf28760Adbb", # auToken
+    #     ['AURI'],
+    #     "0x871ea9aF361ec1104489Ed96438319b46E5FB4c6", # whale
+    #     id="WBTC Generic Lender",
+    # )
 ]
 
 @pytest.fixture
-def router():
-    yield Contract('0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff')
-    
+def router(routerAddress):
+    yield interface.IUniswapV2Router02(routerAddress)
+
+@pytest.fixture
+def routerAddress():
+    # Trisolaris router is not verified, and we don't know what platform will be used to trade comp (probably trisolaris)
+    # TODO change with the router where there is the most liquidity for PLY token
+    yield "0x2CB45Edb4517d5947aFdE3BEAbF95A582506858B"
+
 @pytest.fixture
 def weth(interface):
-    yield interface.ERC20("0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270")
+    yield interface.ERC20("0xC9BdeEd33CD01541e1eeD10f90519d2C06Fe3feB")
     
 @pytest.fixture
-def hnd(interface):
-    yield interface.ERC20("0x10010078a54396F62c96dF8532dc2B4847d47ED3")
+def comp(interface):
+    yield interface.ERC20("0x09c9d464b58d96837f8d8b6f4d9fe4ad408d3a4f")
 
 # specific addresses
 @pytest.fixture
 def usdc(interface):
-    yield interface.ERC20("0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174")
+    yield interface.ERC20("0xB12BFcA5A55806AaF64E99521918A4bf0fC40802")
 
 @pytest.fixture
 def token(request, interface):
     yield interface.IERC20Extended(request.param)
 
 @pytest.fixture
-def aToken(request, interface):
+def auToken(request, interface):
     if request.param == '':
         yield ''
     else:
         yield request.param
-
-@pytest.fixture
-def hToken(request, interface):
-    if request.param == '':
-        yield ''
-    else:
-        yield interface.CErc20I(request.param)
-
-@pytest.fixture
-def hGuage(request, interface):
-    yield request.param
 
 @pytest.fixture
 def lenders(request, interface):
@@ -103,7 +98,6 @@ def strategist(accounts):
 @pytest.fixture
 def get_path(weth):
     def get_path(token_in, token_out):
-
         is_weth = token_in == weth or token_out == weth
         path = [0] * (2 if is_weth else 3)
         path[0] = token_in
@@ -163,12 +157,9 @@ def strategy(
     strategist,
     keeper,
     vault,
-    gov,
     weth,
     router,
     Strategy,
-    GenericAave,
-    fn_isolation
 ):
     strategy = strategist.deploy(Strategy, vault, weth, router)
     strategy.setKeeper(keeper)
@@ -176,39 +167,31 @@ def strategy(
     yield strategy
 
 @pytest.fixture
-def lenderAAVE(
-    strategist,
-    strategy,
-    aToken,
-    GenericAave,
-    lenders
-):
-    if 'AAVE' in lenders:
-        yield strategist.deploy(GenericAave, strategy, "AAVE", aToken, False)
-    else: 
-        yield ''
-
+def blocksPerYear():
+    # 1 second average block time
+    yield 60 * 60 * 24 * 365
 @pytest.fixture
-def lenderHND(
+def lenderAURI(
     strategist,
     strategy,
-    hToken,
-    hGuage,
-    weth, 
-    router,
-    hnd,
-    GenericHundredFinance,
-    lenders
+    auToken,
+    GenericWithParameters,
+    lenders,
+    comp,
+    weth,
+    routerAddress,
+    blocksPerYear
 ):
-    if 'HND' in lenders:
-        yield strategist.deploy(GenericHundredFinance, strategy, "HundredFinance", hToken, hGuage, weth, router, hnd)
+    if 'AURI' in lenders:
+        # Parameters : [_blocksPerYear, _uniswapRouter, _weth, _comp, _name, _ignorePrinting, _cToken, _strategy]
+        yield strategist.deploy(GenericWithParameters, [blocksPerYear, routerAddress, weth, comp, "AURI", True, auToken, strategy])
     else: 
         yield ''
 
 # Function scoped isolation fixture to enable xdist.
 # Snapshots the chain before each test and reverts after test completion.
 @pytest.fixture(scope="function", autouse=True)
-def shared_setup(fn_isolation, lenders, aToken, hToken, hGuage):
+def shared_setup(fn_isolation, lenders, auToken):
     pass
 
 @pytest.fixture
@@ -219,45 +202,26 @@ def dust(decimals):
 def strategyAllLenders(
     strategy,
     gov,
-    lenderAAVE,
-    lenderHND,
+    lenderAURI,
     lenders,
     dust
 ):
-    if 'AAVE' in lenders:
+    if 'AURI' in lenders:
         # lenderAAVE.setDustThreshold(dust, {'from': gov})
-        strategy.addLender(lenderAAVE, {'from': gov})
-    if 'HND' in lenders:
-        lenderHND.setDustThreshold(dust, {'from': gov})
-        strategy.addLender(lenderHND, {'from': gov})
+        strategy.addLender(lenderAURI, {'from': gov})
     assert strategy.numLenders() == len(lenders)
 
 @pytest.fixture
-def strategyAddAAVE(
+def strategyAddAURI(
     strategy,
     gov,
-    lenderAAVE,
+    lenderAURI,
     lenders,
     dust
 ):
-    if 'AAVE' not in lenders:
+    if 'AURI' not in lenders:
         pytest.skip()
-    strategy.addLender(lenderAAVE, {'from': gov})
+    strategy.addLender(lenderAURI, {'from': gov})
     # lenderAAVE.setDustThreshold(dust, {'from': gov})
     assert strategy.numLenders() == 1
 
-@pytest.fixture
-def strategyAddHND(
-    strategy,
-    gov,
-    lenderHND,
-    lenders,
-    dust
-):
-    if 'HND' not in lenders:
-        pytest.skip()
-    strategy.addLender(lenderHND, {'from': gov})
-    lenderHND.setDustThreshold(dust, {'from': gov})
-    assert strategy.numLenders() == 1
-
-    

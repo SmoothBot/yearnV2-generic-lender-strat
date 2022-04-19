@@ -8,16 +8,11 @@ import conftest as config
 
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_up_down_aave(strategyAddAAVE, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
-    if 'AAVE' not in lenders:
+def test_up_down_aave(strategyAddAURI, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
+    if 'AURI' not in lenders:
         pytest.skip()
     run_up_down_test(None, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
 
-@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_up_down_hnd(strategyAddHND, lenders, hToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
-    if 'HND' not in lenders:
-        pytest.skip()
-    run_up_down_test(hToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
 
 def run_up_down_test(
     cToken,

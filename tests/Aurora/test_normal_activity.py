@@ -1,5 +1,5 @@
 from itertools import count
-from brownie import Wei, reverts, Contract, GenericHundredFinance
+from brownie import Wei, reverts, Contract, GenericWithParameters
 from useful_methods import genericStateOfVault, genericStateOfStrat
 import random
 import brownie
@@ -7,20 +7,16 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_all(strategyAllLenders, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+def test_normal_activity_all(strategyAllLenders, token, auToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, auToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_aave(strategyAddAAVE, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
-
-@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_hnd(strategyAddHND, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+def test_normal_activity_aave(strategyAddAURI, token, auToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, auToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 def run_normal_activity_test(
     token,
-    hToken,
+    auToken,
     chain,
     whale,
     vault,
@@ -71,11 +67,6 @@ def run_normal_activity_test(
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
-        if 'HND' in lenders:
-            hToken.mint(0,{"from": whale})
-            # TODO - Remove when HND re-introduce a normal interest rate model
-            lender = GenericHundredFinance.at(strategy.lenders(0))
-            lender.manualHarvest({'from': strategist})
         strategy.harvest({"from": strategist})
 
         # genericStateOfStrat(strategy, currency, vault)

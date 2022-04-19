@@ -8,7 +8,7 @@ struct GenericLenderParameters {
     address _weth;
     //These parameters changes for every different protocol
     address _comp;
-    address _name;
+    string _name;
     //These parameters changes for every different token/strategy
     address _cToken;
     address _strategy;

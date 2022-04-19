@@ -24,17 +24,17 @@ contract GenericWithParameters is GenericLenderBase {
     // address public constant comp = address(0xc00e94Cb662C3520282E6f5717214004A7f26888);
     // address public constant weth = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
-    uint256 private constant blocksPerYear;
-    address public constant uniswapRouter;
-    address public constant comp;
-    address public constant weth;
+    uint256 private immutable blocksPerYear;
+    address public immutable uniswapRouter;
+    address public immutable comp;
+    address public immutable weth;
 
     uint256 public minCompToSell = 0.5 ether;
 
     CErc20I public cToken;
 
     constructor(
-        GenericLenderParameters params
+        GenericLenderParameters memory params
     ) public GenericLenderBase(params._strategy, params._name) {
         blocksPerYear = params._blocksPerYear;
         uniswapRouter = params._uniswapRouter;
@@ -62,7 +62,7 @@ contract GenericWithParameters is GenericLenderBase {
         address _cToken
     ) external returns (address newLender) {
         newLender = _clone(_strategy, _name);
-        GenericCompound(newLender).initialize(_cToken);
+        GenericWithParameters(newLender).initialize(_cToken);
     }
 
     function nav() external view override returns (uint256) {

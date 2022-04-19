@@ -1,3 +1,4 @@
+from ctypes import addressof
 from itertools import count
 from brownie import Wei, reverts, Contract, GenericWithParameters
 from useful_methods import genericStateOfVault, genericStateOfStrat
@@ -37,11 +38,16 @@ def run_normal_activity_test(
 
     whale_deposit = amount
     vault.deposit(whale_deposit, {"from": whale})
+    print("Deposited ", whale_deposit / 1e18, " from whale")
     chain.sleep(1)
     chain.mine(1)
     strategy.setWithdrawalThreshold(0, {"from": gov})
     assert strategy.harvestTrigger(1) == True
     print(whale_deposit / 1e18)
+    print("Harvest trigger", strategy.harvestTrigger(1))
+    print("Strategy balance", token.balanceOf(strategy.address))
+    print("Vault", token.balanceOf(vault.address))
+    print("StrategySpecific balance", token.balanceOf(strategy.lenders(0)))
     status = strategy.lendStatuses()
     form = "{:.2%}"
     formS = "{:,.0f}"

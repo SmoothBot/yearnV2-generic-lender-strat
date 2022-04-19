@@ -13,7 +13,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./GenericLenderBase.sol";
-// TODO check that this has all the methods required from Strategy.sol
 contract GenericWithParameters is GenericLenderBase {
     using SafeERC20 for IERC20;
     using Address for address;

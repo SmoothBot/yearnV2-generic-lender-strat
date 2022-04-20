@@ -183,8 +183,8 @@ def lenderAURI(
     blocksPerYear
 ):
     if 'AURI' in lenders:
-        # Parameters : [_blocksPerYear, _uniswapRouter, _weth, _comp, _name, _ignorePrinting, _cToken, _strategy]
-        yield strategist.deploy(GenericWithParameters, [blocksPerYear, routerAddress, weth, comp, "AURI", True, auToken, strategy])
+        # Parameters : [_blocksPerYear, _uniswapRouter, _weth, _comp, _name, _ignorePrinting, _usesBlocks, _cToken, _strategy]
+        yield strategist.deploy(GenericWithParameters, [blocksPerYear, routerAddress, weth, comp, "AURI", True, False, auToken, strategy])
     else: 
         yield ''
 

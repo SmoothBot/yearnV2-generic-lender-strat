@@ -10,6 +10,7 @@ struct GenericLenderParameters {
     address _comp;
     string _name;
     bool _ignorePrinting;
+    bool _usesBlocks;
     //These parameters changes for every different token/strategy
     address _cToken;
     address _strategy;

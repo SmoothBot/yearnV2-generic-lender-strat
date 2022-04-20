@@ -8,21 +8,24 @@ import "../Interfaces/Compound/CErc20I.sol";
 import "../Interfaces/Compound/InterestRateModel.sol";
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 import "../Interfaces/GenericLender/GenericLenderParameters.sol";
+import "../Libraries/CTokenLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./GenericLenderBase.sol";
+
 contract GenericWithParameters is GenericLenderBase {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
 
+    //If the protocol does not uses blocks, blocksPerYear should be set to the # of seconds in a year
     uint256 private immutable blocksPerYear;
     address public immutable uniswapRouter;
     address public immutable comp;
     address public immutable weth;
-
+    bool public immutable usesBlocks;
     uint256 public minCompToSell = 0.5 ether;
 
     CErc20I public cToken;
@@ -37,6 +40,7 @@ contract GenericWithParameters is GenericLenderBase {
         comp = params._comp;
         weth = params._weth;
         ignorePrinting = params._ignorePrinting;
+        usesBlocks = params._usesBlocks;
         _initialize(params._cToken);
     }
 
@@ -85,7 +89,7 @@ contract GenericWithParameters is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        return cToken.supplyRatePerBlock().mul(blocksPerYear);
+        return CTokenLib.getSupplyRate(address(cToken), usesBlocks).mul(blocksPerYear);
     }
 
     function weightedApr() external view override returns (uint256) {

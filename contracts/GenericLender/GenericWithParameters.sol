@@ -5,10 +5,10 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "../Interfaces/Compound/CErc20I.sol";
+import "../Interfaces/utils/CErc20TimestampI.sol";
 import "../Interfaces/Compound/InterestRateModel.sol";
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 import "../Interfaces/GenericLender/GenericLenderParameters.sol";
-import "../Libraries/CTokenLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -89,7 +89,8 @@ contract GenericWithParameters is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        return CTokenLib.getSupplyRate(address(cToken), usesBlocks).mul(blocksPerYear);
+        uint256 supplyRate = (usesBlocks)?CErc20I(address(cToken)).supplyRatePerBlock():CErc20TimestampI(address(cToken)).supplyRatePerTimestamp();
+        return supplyRate.mul(blocksPerYear);
     }
 
     function weightedApr() external view override returns (uint256) {

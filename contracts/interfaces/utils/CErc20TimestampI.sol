@@ -99,37 +99,37 @@ interface CTokenTimestampI {
 
     /*** User Interface ***/
 
-    function transfer(address dst, uint amount) external virtual returns (bool);
+    function transfer(address dst, uint amount) external returns (bool);
 
-    function transferFrom(address src, address dst, uint amount) external virtual returns (bool);
+    function transferFrom(address src, address dst, uint amount) external returns (bool);
     
-    function approve(address spender, uint amount) external virtual returns (bool);
+    function approve(address spender, uint amount) external returns (bool);
     
-    function allowance(address owner, address spender) external virtual view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint256);
     
-    function balanceOf(address owner) external virtual view returns (uint);
+    function balanceOf(address owner) external view returns (uint256);
     
-    function balanceOfUnderlying(address owner) external virtual returns (uint);
+    function balanceOfUnderlying(address owner) external returns (uint256);
     
-    function getAccountSnapshot(address account) external virtual view returns (uint, uint, uint);
+    function getAccountSnapshot(address account) external view returns (uint256, uint256, uint256);
     
-    function borrowRatePerTimestamp() external virtual view returns (uint);
+    function borrowRatePerTimestamp() external view returns (uint256);
     
-    function supplyRatePerTimestamp() external virtual view returns (uint);
+    function supplyRatePerTimestamp() external view returns (uint256);
     
-    function totalBorrowsCurrent() external virtual returns (uint);
+    function totalBorrowsCurrent() external returns (uint256);
     
-    function borrowBalanceCurrent(address account) external virtual returns (uint);
+    function borrowBalanceCurrent(address account) external returns (uint);
     
-    function borrowBalanceStored(address account) public view virtual returns (uint);
+    function borrowBalanceStored(address account) external view returns (uint);
     
-    function exchangeRateCurrent() public virtual returns (uint);
+    function exchangeRateCurrent() external returns (uint256);
     
-    function exchangeRateStored() public view virtual returns (uint);
+    function exchangeRateStored() external view returns (uint256);
     
-    function getCash() external virtual view returns (uint);
+    function getCash() external view returns (uint256);
     
-    function accrueInterest() public virtual;
+    function accrueInterest() external returns (uint256);
     
     function interestRateModel() external view returns (InterestRateModel);
 

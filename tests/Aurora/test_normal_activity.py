@@ -35,7 +35,7 @@ def run_normal_activity_test(
 
     debt_ratio = 10_000
     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 1000, {"from": gov})
-
+    print(vault.strategies()) # FIXME strategies Sequence has incorrect length, expected 1 but got 0
     whale_deposit = amount
     vault.deposit(whale_deposit, {"from": whale})
     print("Deposited ", whale_deposit / 1e18, " from whale")
@@ -55,9 +55,7 @@ def run_normal_activity_test(
         print(
             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/(10 ** decimals))} APR: {form.format(j[2]/1e18)}"
         )
-
     strategy.harvest({"from": strategist})
-
     status = strategy.lendStatuses()
     form = "{:.2%}"
     formS = "{:,.0f}"

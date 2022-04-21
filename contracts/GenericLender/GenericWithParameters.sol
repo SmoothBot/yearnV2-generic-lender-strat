@@ -163,7 +163,8 @@ contract GenericWithParameters is GenericLenderBase {
 
     function deposit() external override management {
         uint256 balance = want.balanceOf(address(this));
-        require(cToken.mint(balance) == 0, "ctoken: mint fail");
+        if(balance > 0)
+            require(cToken.mint(balance) == 0, "ctoken: mint fail");
     }
 
     function withdrawAll() external override management returns (bool) {

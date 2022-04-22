@@ -46,7 +46,7 @@ def routerAddress():
 
 @pytest.fixture
 def weth(interface):
-    yield interface.ERC20("0xC9BdeEd33CD01541e1eeD10f90519d2C06Fe3feB")
+    yield interface.ERC20("0xC42C30aC6Cc15faC9bD938618BcaA1a1FaE8501d")
     
 @pytest.fixture
 def comp(interface):

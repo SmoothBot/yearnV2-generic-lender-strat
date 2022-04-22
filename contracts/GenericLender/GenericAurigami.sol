@@ -4,7 +4,6 @@ pragma solidity 0.6.12;
 
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/Compound/CErc20I.sol";
 import "../interfaces/Aurigami/CErc20TimestampI.sol";
 import "../interfaces/Compound/InterestRateModel.sol";
 import "../interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
@@ -15,7 +14,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./GenericLenderBase.sol";
 
-contract GenericWithParameters is GenericLenderBase {
+contract GenericAurigami is GenericLenderBase {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -28,7 +27,7 @@ contract GenericWithParameters is GenericLenderBase {
     bool public immutable usesBlocks;
     uint256 public minCompToSell = 0.5 ether;
 
-    CErc20I public cToken;
+    CErc20TimestampI public cToken;
 
     bool public ignorePrinting;
 
@@ -51,8 +50,8 @@ contract GenericWithParameters is GenericLenderBase {
 
     function _initialize(address _cToken) internal {
         //TODO: if initialize() is removed -> remove this require
-        require(address(cToken) == address(0), "GenericCream already initialized");
-        cToken = CErc20I(_cToken);
+        require(address(cToken) == address(0), "GeneriAurigami already initialized");
+        cToken = CErc20TimestampI(_cToken);
         require(cToken.underlying() == address(want), "WRONG CTOKEN");
         want.safeApprove(_cToken, uint256(-1));
     }
@@ -63,7 +62,7 @@ contract GenericWithParameters is GenericLenderBase {
         address _cToken
     ) external returns (address newLender) {
         newLender = _clone(_strategy, _name);
-        GenericWithParameters(newLender).initialize(_cToken);
+        GenericAurigami(newLender).initialize(_cToken);
     }
 
     function nav() external view override returns (uint256) {
@@ -89,8 +88,7 @@ contract GenericWithParameters is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        uint256 supplyRate = (usesBlocks)?CErc20I(address(cToken)).supplyRatePerBlock():CErc20TimestampI(address(cToken)).supplyRatePerTimestamp();
-        return supplyRate.mul(blocksPerYear);
+        return cToken.supplyRatePerTimestamp().mul(blocksPerYear);
     }
 
     function weightedApr() external view override returns (uint256) {
@@ -134,10 +132,10 @@ contract GenericWithParameters is GenericLenderBase {
 
             if (toWithdraw <= liquidity) {
                 //we can take all
-                require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
+                cToken.redeemUnderlying(toWithdraw); //auTokens methods do not return an uint for the status
             } else {
                 //take all we can
-                require(cToken.redeemUnderlying(liquidity) == 0, "ctoken: redeemUnderlying fail");
+                cToken.redeemUnderlying(liquidity);
             }
         }
         if(!ignorePrinting) {
@@ -164,7 +162,7 @@ contract GenericWithParameters is GenericLenderBase {
     function deposit() external override management {
         uint256 balance = want.balanceOf(address(this));
         if(balance > 0)
-            require(cToken.mint(balance) == 0, "ctoken: mint fail");
+            cToken.mint(balance); // auTokens .mint() method does not return a uint
     }
 
     function withdrawAll() external override management returns (bool) {

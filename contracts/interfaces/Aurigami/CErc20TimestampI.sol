@@ -109,25 +109,25 @@ interface CTokenTimestampI {
     
     function balanceOf(address owner) external view returns (uint256);
     
-    function balanceOfUnderlying(address owner) external returns (uint256);
+    function balanceOfUnderlying(address owner) external returns (uint);
     
-    function getAccountSnapshot(address account) external view returns (uint256, uint256, uint256);
+    function getAccountSnapshot(address account) external view returns (uint, uint, uint); 
     
-    function borrowRatePerTimestamp() external view returns (uint256);
+    function borrowRatePerTimestamp() external view returns (uint);
     
-    function supplyRatePerTimestamp() external view returns (uint256);
+    function supplyRatePerTimestamp() external view returns (uint);
     
-    function totalBorrowsCurrent() external returns (uint256);
+    function totalBorrowsCurrent() external returns (uint);
     
     function borrowBalanceCurrent(address account) external returns (uint);
     
     function borrowBalanceStored(address account) external view returns (uint);
     
-    function exchangeRateCurrent() external returns (uint256);
+    function exchangeRateCurrent() external returns (uint);
     
     function exchangeRateStored() external view returns (uint256);
     
-    function getCash() external view returns (uint256);
+    function getCash() external view returns (uint);
     
     function accrueInterest() external returns (uint256);
     
@@ -151,25 +151,25 @@ interface CTokenTimestampI {
 }
 
 interface CErc20TimestampI is CTokenTimestampI {
-    function mint(uint256 mintAmount) external returns (uint256);
+    function mint(uint256 mintAmount) external;
 
-    function redeem(uint256 redeemTokens) external returns (uint256);
+    function redeem(uint256 redeemTokens) external;
 
     function comptroller() external view returns (address);
 
-    function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
+    function redeemUnderlying(uint256 redeemAmount) external;
 
-    function borrow(uint256 borrowAmount) external returns (uint256);
+    function borrow(uint256 borrowAmount) external;
 
-    function repayBorrow(uint256 repayAmount) external returns (uint256);
+    function repayBorrow(uint256 repayAmount) external;
 
-    function repayBorrowBehalf(address borrower, uint256 repayAmount) external returns (uint256);
+    function repayBorrowBehalf(address borrower, uint256 repayAmount) external;
 
     function liquidateBorrow(
         address borrower,
         uint256 repayAmount,
         CTokenI cTokenCollateral
-    ) external returns (uint256);
+    ) external ;
 
     function underlying() external view returns (address);
 

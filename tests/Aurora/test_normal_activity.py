@@ -1,6 +1,6 @@
 from ctypes import addressof
 from itertools import count
-from brownie import Wei, reverts, Contract, GenericWithParameters
+from brownie import Wei, reverts, Contract, GenericWithParameters, interface
 from useful_methods import genericStateOfVault, genericStateOfStrat
 import random
 import brownie
@@ -35,7 +35,6 @@ def run_normal_activity_test(
 
     debt_ratio = 10_000
     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 1000, {"from": gov})
-    print(vault.strategies()) # FIXME strategies Sequence has incorrect length, expected 1 but got 0
     whale_deposit = amount
     vault.deposit(whale_deposit, {"from": whale})
     print("Deposited ", whale_deposit / 1e18, " from whale")
@@ -44,6 +43,7 @@ def run_normal_activity_test(
     strategy.setWithdrawalThreshold(0, {"from": gov})
     assert strategy.harvestTrigger(1) == True
     print(whale_deposit / 1e18)
+    print("cToken exchangeRateStored", interface.CErc20TimestampI(auToken).exchangeRateStored())
     print("Harvest trigger", strategy.harvestTrigger(1))
     print("Strategy balance", token.balanceOf(strategy.address))
     print("Vault", token.balanceOf(vault.address))
@@ -64,6 +64,8 @@ def run_normal_activity_test(
             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/(10 ** decimals))} APR: {form.format(j[2]/1e18)}"
         )
     startingBalance = vault.totalAssets()
+    print("cToken exchangeRateStored", interface.CErc20TimestampI(auToken).exchangeRateStored())
+
     for i in range(10):
 
         waitBlock = 50
@@ -71,20 +73,34 @@ def run_normal_activity_test(
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
+
+        print("Strategy balance before: ", strategy.lentTotalAssets())
+        print("cToken exchangeRateStored", interface.CErc20TimestampI(auToken).exchangeRateStored())
+        # Update exchangeRateStored
+        interface.CErc20TimestampI(auToken).exchangeRateCurrent({'from': strategist})
+        print("cToken exchangeRateStored", interface.CErc20TimestampI(auToken).exchangeRateStored())
+
         strategy.harvest({"from": strategist})
+        print("Strategy balance after: ", strategy.lentTotalAssets())
 
         # genericStateOfStrat(strategy, currency, vault)
         # genericStateOfVault(vault, currency)
 
         profit = (vault.totalAssets() - startingBalance) / 1e6
+        print("Profit: ", vault.totalAssets() - startingBalance)
         strState = vault.strategies(strategy)
+        print("strState: ", strState)
         totalReturns = strState[7]
+        print("totalReturns", totalReturns)
         totaleth = totalReturns / 1e6
+        print("totalEth", totaleth)
+        
+
         # print(f'Real Profit: {profit:.5f}')
         difff = profit - totaleth
         # print(f'Diff: {difff}')
 
-        blocks_per_year = 3154 * 10**4
+        blocks_per_year = 60 * 60 * 24 * 365
         assert startingBalance != 0
         time = (i + 1) * waitBlock
         assert time != 0

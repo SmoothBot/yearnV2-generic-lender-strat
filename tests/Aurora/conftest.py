@@ -175,7 +175,7 @@ def lenderAURI(
     strategist,
     strategy,
     auToken,
-    GenericWithParameters,
+    GenericAurigami,
     lenders,
     comp,
     weth,
@@ -184,7 +184,7 @@ def lenderAURI(
 ):
     if 'AURI' in lenders:
         # Parameters : [_blocksPerYear, _uniswapRouter, _weth, _comp, _name, _ignorePrinting, _usesBlocks, _cToken, _strategy]
-        yield strategist.deploy(GenericWithParameters, [blocksPerYear, routerAddress, weth, comp, "AURI", True, False, auToken, strategy])
+        yield strategist.deploy(GenericAurigami, [blocksPerYear, routerAddress, weth, comp, "AURI", True, False, auToken, strategy])
     else: 
         yield ''
 

@@ -18,13 +18,6 @@ params = [
         "0xcEf6C2e20898C2604886b888552CA6CcF66933B0", # whale
         id="USDT Generic Lender",
     ),
-    pytest.param( # ETH -> this must use EthCompound, test separately?
-        "", # token
-        "0xca9511B610bA5fc7E311FDeF9cE16050eE4449E9", # auToken
-        ['AURI'],
-        "", # whale
-        id="Eth Lender",
-    ),
     pytest.param( # WBTC
         "0xF4eB217Ba2454613b15dBdea6e5f22276410e89e", # token
         "0xCFb6b0498cb7555e7e21502E0F449bf28760Adbb", # auToken

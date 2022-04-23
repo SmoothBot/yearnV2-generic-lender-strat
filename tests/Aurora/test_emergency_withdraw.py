@@ -34,7 +34,7 @@ def run_emergency_exit_test(
     chain.sleep(1)
     chain.mine(1)
     strategy.setWithdrawalThreshold(0, {"from": gov})
-    assert strategy.harvestTrigger(1 * 1e18) == True
+    assert strategy.harvestTrigger(1 * 1e14) == True
 
     # load up the strategy and lender with capital
     strategy.harvest({"from": strategist})

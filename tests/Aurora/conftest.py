@@ -11,27 +11,27 @@ params = [
         "0x8e9fb3f2cc8b08184cb5fb7bcdc61188e80c3cb0", # whale
         id="USDC Generic Lender",
     ),
-    # pytest.param( # USDT
-    #     "0x4988a896b1227218e4A686fdE5EabdcAbd91571f", # token
-    #     "0xaD5A2437Ff55ed7A8Cad3b797b3eC7c5a19B1c54", # auToken
-    #     ['AURI'],
-    #     "0xcEf6C2e20898C2604886b888552CA6CcF66933B0", # whale
-    #     id="USDT Generic Lender",
-    # ),
-    # pytest.param( # ETH -> this must use EthCompound, test separately?
-    #     "", # token
-    #     "0xca9511B610bA5fc7E311FDeF9cE16050eE4449E9", # auToken
-    #     ['AURI'],
-    #     "", # whale
-    #     id="Eth Lender",
-    # ),
-    # pytest.param( # WBTC
-    #     "0xF4eB217Ba2454613b15dBdea6e5f22276410e89e", # token
-    #     "0xCFb6b0498cb7555e7e21502E0F449bf28760Adbb", # auToken
-    #     ['AURI'],
-    #     "0x871ea9aF361ec1104489Ed96438319b46E5FB4c6", # whale
-    #     id="WBTC Generic Lender",
-    # )
+    pytest.param( # USDT
+        "0x4988a896b1227218e4A686fdE5EabdcAbd91571f", # token
+        "0xaD5A2437Ff55ed7A8Cad3b797b3eC7c5a19B1c54", # auToken
+        ['AURI'],
+        "0xcEf6C2e20898C2604886b888552CA6CcF66933B0", # whale
+        id="USDT Generic Lender",
+    ),
+    pytest.param( # ETH -> this must use EthCompound, test separately?
+        "", # token
+        "0xca9511B610bA5fc7E311FDeF9cE16050eE4449E9", # auToken
+        ['AURI'],
+        "", # whale
+        id="Eth Lender",
+    ),
+    pytest.param( # WBTC
+        "0xF4eB217Ba2454613b15dBdea6e5f22276410e89e", # token
+        "0xCFb6b0498cb7555e7e21502E0F449bf28760Adbb", # auToken
+        ['AURI'],
+        "0xbc8A244e8fb683ec1Fd6f88F3cc6E565082174Eb", # whale
+        id="WBTC Generic Lender",
+    )
 ]
 
 @pytest.fixture
@@ -136,8 +136,8 @@ def decimals(token):
 def amount(token, token_price, decimals):
     ## todo - make generic
     price = token_price(token, decimals)
-    amount = int((100000 / price) * (10 ** token.decimals()))
-    print(amount)
+    amount = int((100000 / price) * (10 ** decimals))
+    print("Amount: ", amount)
     yield amount
 
 @pytest.fixture

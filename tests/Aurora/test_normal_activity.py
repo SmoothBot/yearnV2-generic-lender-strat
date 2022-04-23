@@ -37,7 +37,7 @@ def run_normal_activity_test(
     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 1000, {"from": gov})
     whale_deposit = amount
     vault.deposit(whale_deposit, {"from": whale})
-    print("Deposited ", whale_deposit / 1e18, " from whale")
+    print("Deposited ", whale_deposit / token.decimals(), " from whale")
     chain.sleep(1)
     chain.mine(1)
     strategy.setWithdrawalThreshold(0, {"from": gov})

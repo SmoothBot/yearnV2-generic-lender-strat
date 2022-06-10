@@ -5,31 +5,32 @@ fixtures = "token", "scrToken", "ibToken", "hToken", "hGuage", "hChef", "hPID", 
 params = [
     pytest.param( # USDC
         "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75", # token
-        "0xE45Ac34E528907d0A0239ab5Db507688070B20bf", # scrToken
+        "0xCc44A1eDC0E8EcC6DF9703Dee4318B3da66b4F70", # scrToken
         "0x328A7b4d538A2b3942653a9983fdA3C12c571141", # ib cToken
         "0x243E33aa7f6787154a8E59d3C27a66db3F8818ee", # HND hToken
         "0x110614276F7b9Ae8586a1C1D9Bc079771e2CE8cF", # HND Gauge
         "0x9A07fB107b9d8eA8B82ECF453Efb7cFb85A66Ce9", # LQDR HND Chef
         0, # hPID
-        ['Scream', 'IB', 'HND', 'LqdrHND'],
+        #['Scream', 'IB', 'HND', 'LqdrHND'],
+        ['Scream'],
         "0xe578C856933D8e1082740bf7661e379Aa2A30b26",
         id="USDC Generic Lender",
     ),
     pytest.param( # FRAX
         "0xdc301622e621166BD8E82f2cA0A26c13Ad0BE355", # token
-        "0x4E6854EA84884330207fB557D1555961D85Fc17E", # scrToken
+        "", # scrToken
         "", # ib cToken
         "0xb4300e088a3AE4e624EE5C71Bc1822F68BB5f2bc", # HND hToken
         "0x2c7a9d9919f042C4C120199c69e126124d09BE7c", # HND Gauge
         "", # LQDR HND Chef
         0, # hPID
-        ['HND', 'Scream'],
+        ['HND'],
         "0x7a656B342E14F745e2B164890E88017e27AE7320",
         id="FRAX Generic Lender",
     ),
     pytest.param( # WETH
         "0x74b23882a30290451A17c44f4F05243b6b58C76d", # token
-        "0xC772BA6C2c28859B7a0542FAa162a56115dDCE25", # scrToken
+        "0x4fEd0e73f836112029Fb740d5730F0782789C349", # scrToken
         "", # ib cToken
         "", # HND hToken
         "", # HND Gauge
@@ -41,7 +42,7 @@ params = [
     ),
     pytest.param( # WFTM
         "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83", # token
-        "0x5AA53f03197E08C4851CAD8C92c7922DA5857E5d", # scrToken
+        "0xb681F4928658a8d54bd4773F5B5DEAb35d63c3CF", # scrToken
         "", # ib cToken
         "", # HND hToken
         "", # HND Gauge
@@ -194,13 +195,15 @@ def strategy(
     vault,
     gov,
     Strategy,
+    router,
+    weth,
     GenericScream,
     GenericIronBank,
     HundredFinanceFantom,
     HundredFinanceFantomLqdr,
     fn_isolation
 ):
-    strategy = strategist.deploy(Strategy, vault)
+    strategy = strategist.deploy(Strategy, vault, weth, router)
     strategy.setKeeper(keeper)
     strategy.setWithdrawalThreshold(0)
     yield strategy

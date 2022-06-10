@@ -31,7 +31,7 @@ contract GenericScream is GenericLenderBase {
     address public constant spookyRouter = address(0xF491e7B69E4244ad4002BC14e878a34207E38c29);
     address public constant scream = address(0xe0654C8e6fd4D733349ac7E09f6f23DA256bF475);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
-    address public constant unitroller = address(0x260E596DAbE3AFc463e75B6CC05d8c46aCAcFB09);
+    address public constant unitroller = address(0x3d3094Aec3b63C744b9fe56397D36bE568faEBdF);
 
     uint256 public dustThreshold;
 

@@ -369,6 +369,7 @@ contract Strategy is BaseStrategy {
             return (_profit, _loss, _debtPayment);
         }
 
+
         uint256 debt = vault.strategies(address(this)).totalDebt;
 
         if (total >= debt) {

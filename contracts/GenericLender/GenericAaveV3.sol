@@ -74,6 +74,8 @@ contract GenericAaveV3 is GenericLenderBase {
     uint16 internal constant DEFAULT_REFERRAL = 7; 
     uint16 internal customReferral;
 
+    uint256 public dustThreshold;
+
     /*** 
     Chain specific addresses that will be set on Constructor
     ***/
@@ -147,6 +149,7 @@ contract GenericAaveV3 is GenericLenderBase {
         secondRouter = _secondRouter;
         profitFactor = 100;
         router = IUniswapV2Router02(_baseRouter);
+        dustThreshold = 10_000;
     }
 
     // for the management to activate / deactivate incentives functionality
@@ -164,6 +167,11 @@ contract GenericAaveV3 is GenericLenderBase {
         address currentRouter = address(router);
 
         router = currentRouter == baseRouter ? IUniswapV2Router02(secondRouter) : IUniswapV2Router02(baseRouter);
+    }
+
+    //adjust dust threshol
+    function setDustThreshold(uint256 amount) external management {
+        dustThreshold = amount;
     }
 
     function setReferralCode(uint16 _customReferral) external management {
@@ -212,6 +220,9 @@ contract GenericAaveV3 is GenericLenderBase {
 
     function underlyingBalanceStored() public view returns (uint256 balance) {
         balance = aToken.balanceOf(address(this));
+        if (balance < dustThreshold) {
+            balance = 0;
+        }
     }
 
     function apr() external view override returns (uint256) {
@@ -300,7 +311,7 @@ contract GenericAaveV3 is GenericLenderBase {
     }
 
     function hasAssets() external view override returns (bool) {
-        return aToken.balanceOf(address(this)) > dust || want.balanceOf(address(this)) > dust;
+        return aToken.balanceOf(address(this)) > dustThreshold || want.balanceOf(address(this)) > dust;
     }
 
     // Only for incentivised aTokens
@@ -391,7 +402,13 @@ contract GenericAaveV3 is GenericLenderBase {
     }
 
     function _nav() internal view returns (uint256) {
-        return want.balanceOf(address(this)).add(underlyingBalanceStored());
+        uint256 amount = want.balanceOf(address(this)).add(underlyingBalanceStored());
+
+        if (amount < dustThreshold) {
+            return 0;
+        } else {
+            return amount;
+        }
     }
 
     function _apr() internal view returns (uint256) {
@@ -430,7 +447,7 @@ contract GenericAaveV3 is GenericLenderBase {
         uint256 looseBalance = want.balanceOf(address(this));
         uint256 total = balanceUnderlying.add(looseBalance);
 
-        if (amount > total) {
+        if (amount.add(dustThreshold) > total) {
             //cant withdraw more than we own
             amount = total;
         }

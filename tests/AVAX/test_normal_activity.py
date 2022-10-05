@@ -1,5 +1,5 @@
 from itertools import count
-from brownie import Wei, reverts, Contract
+from brownie import Wei, reverts, Contract, interface, GenericAaveV3
 from useful_methods import genericStateOfVault, genericStateOfStrat
 import random
 import brownie
@@ -7,8 +7,8 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_all(strategyAllLenders, token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, scrToken, ibToken, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+def test_normal_activity_all(strategyAllLenders, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_aave(strategyAddAave, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
@@ -66,16 +66,20 @@ def run_normal_activity_test(
         )
     startingBalance = vault.totalAssets()
     for i in range(4):
-
         waitBlock = 25
         print(f'\n----wait {waitBlock} blocks----')
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
-        if 'Aave' in lenders:
-            aToken.mint(0,{"from": whale})
+        # if 'Aave' in lenders:
+        #     aToken.mint(0,{"from": whale})
         if 'Benqi' in lenders:
             qiToken.mint(0,{"from": whale})
+        if 'Aave' in lenders:
+            for j in range(len(lenders)):
+                lender = interface.IGenericLender(strategy.lenders(j))
+                if lender.lenderName() == 'Aave':
+                    GenericAaveV3.at(lender.address).harvest({"from": gov})
         strategy.harvest({"from": strategist})
 
         # genericStateOfStrat(strategy, currency, vault)
@@ -89,7 +93,7 @@ def run_normal_activity_test(
         difff = profit - totaleth
         # print(f'Diff: {difff}')
 
-        blocks_per_year = 3154 * 10**4
+        blocks_per_year = 3156 * 10**4  
         assert startingBalance != 0
         time = (i + 1) * waitBlock
         assert time != 0

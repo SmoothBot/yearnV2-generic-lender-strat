@@ -6,7 +6,7 @@ import brownie
 import pytest
 import conftest as config
 
-
+@pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_up_down_aave(strategyAddAave, aToken, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
     if 'Aave' not in lenders:

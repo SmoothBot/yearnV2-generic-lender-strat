@@ -16,9 +16,8 @@ def test_emergency_exit_benqi(strategyAddBenqi, token, aToken, qiToken, chain, w
 
 def run_emergency_exit_test(
     token,
-    scrToken,
-    ibToken,
-    hToken,
+    aToken,
+    qiToken,
     chain,
     whale,
     vault,

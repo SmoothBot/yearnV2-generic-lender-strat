@@ -406,7 +406,6 @@ contract GenericAaveV3 is GenericLenderBase {
 
         uint256 incentivesRate = 0;
         if(isIncentivised) {
-
             address[] memory rewardTokens = _incentivesController().getRewardsByAsset(address(aToken));
             uint256 i = 0;
             uint256 _maxLoops = maxLoops;

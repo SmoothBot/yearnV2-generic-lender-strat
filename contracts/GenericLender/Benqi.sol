@@ -11,7 +11,8 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../Interfaces/UniswapInterfaces/IUniswapV2Router02.sol";
 
 import "../Interfaces/Benqi/CErc20TimestampI.sol";
-
+import "../Interfaces/Benqi/ComptrollerBenqiInterface.sol";
+import "../Interfaces/utils/IWavax.sol";
 import "./GenericLenderBase.sol";
 
 /********************
@@ -29,11 +30,18 @@ contract Benqi is GenericLenderBase {
     uint256 private constant blocksPerYear = 31_536_000;
     address public constant uniswapRouter = address(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
     address public constant comp = address(0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5);
-    address public constant weth = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
+    address public constant wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
+    address public constant unitroller = address(0x486Af39519B4Dc9a7fCcd318217352830E8AD9b4);
 
-    uint256 public minCompToSell = 0.5 ether;
+
+    uint256 public dustThreshold;
+
+    uint256 public minCompToSell = 0 ether;
+    uint256 public minAvaxToSell = 0 ether;
 
     CErc20TimestampI public cToken;
+
+    
 
     constructor(
         address _strategy,
@@ -52,6 +60,7 @@ contract Benqi is GenericLenderBase {
         cToken = CErc20TimestampI(_cToken);
         require(cToken.underlying() == address(want), "WRONG CTOKEN");
         want.safeApprove(_cToken, uint256(-1));
+        dustThreshold = 10_000;
     }
 
     function cloneBenqiLender(
@@ -63,17 +72,28 @@ contract Benqi is GenericLenderBase {
         Benqi(newLender).initialize(_cToken);
     }
 
+    //adjust dust threshol
+    function setDustThreshold(uint256 amount) external management {
+        dustThreshold = amount;
+    }
+
     function nav() external view override returns (uint256) {
         return _nav();
     }
 
     function _nav() internal view returns (uint256) {
-        return want.balanceOf(address(this)).add(underlyingBalanceStored());
+        uint256 amount = want.balanceOf(address(this)).add(underlyingBalanceStored());
+
+        if (amount < dustThreshold) {
+            return 0;
+        } else {
+            return amount;
+        }
     }
 
     function underlyingBalanceStored() public view returns (uint256 balance) {
         uint256 currentCr = cToken.balanceOf(address(this));
-        if (currentCr == 0) {
+        if (currentCr < dustThreshold) {
             balance = 0;
         } else {
             //The current exchange rate as an unsigned integer, scaled by 1e18.
@@ -113,9 +133,18 @@ contract Benqi is GenericLenderBase {
         uint256 looseBalance = want.balanceOf(address(this));
         uint256 total = balanceUnderlying.add(looseBalance);
 
-        if (amount > total) {
-            //cant withdraw more than we own
-            amount = total;
+        if (amount.add(dustThreshold) >= total) {
+            //cant withdraw more than we own. so withdraw all we can
+            if (balanceUnderlying > dustThreshold) {
+                require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "ctoken: redeemAll fail");
+            }
+            looseBalance = want.balanceOf(address(this));
+            if (looseBalance > 0) {
+                want.safeTransfer(address(strategy), looseBalance);
+                return looseBalance;
+            } else {
+                return 0;
+            }
         }
 
         if (looseBalance >= amount) {
@@ -128,13 +157,11 @@ contract Benqi is GenericLenderBase {
 
         if (liquidity > 1) {
             uint256 toWithdraw = amount.sub(looseBalance);
-
-            if (toWithdraw <= liquidity) {
-                //we can take all
+            if (toWithdraw > liquidity) {
+                toWithdraw = liquidity;
+            }
+            if (toWithdraw > dustThreshold) {
                 require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
-            } else {
-                //take all we can
-                require(cToken.redeemUnderlying(liquidity) == 0, "ctoken: redeemUnderlying fail");
             }
         }
         _disposeOfComp();
@@ -144,15 +171,33 @@ contract Benqi is GenericLenderBase {
     }
 
     function _disposeOfComp() internal {
+        ComptrollerBenqiInterface comptroller = ComptrollerBenqiInterface(unitroller);
+
+        comptroller.claimReward(0, address(this));
+        comptroller.claimReward(1, address(this));
         uint256 _comp = IERC20(comp).balanceOf(address(this));
 
         if (_comp > minCompToSell) {
-            address[] memory path = new address[](3);
-            path[0] = comp;
-            path[1] = weth;
-            path[2] = address(want);
-
+            address[] memory path = getTokenOutPath(comp, address(want));
             IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path, address(this), now);
+        }
+        IWavax(payable(wavax)).deposit{value: address(this).balance}();
+        uint256 _avax = IERC20(wavax).balanceOf(address(this));
+        if (_avax > minAvaxToSell) {
+            address[] memory path = getTokenOutPath(wavax, address(want));
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path, address(this), now);
+        }
+    }
+
+    function getTokenOutPath(address _token_in, address _token_out) internal pure returns (address[] memory _path) {
+        bool is_wftm = _token_in == address(wftm) || _token_out == address(wftm);
+        _path = new address[](is_wftm ? 2 : 3);
+        _path[0] = _token_in;
+        if (is_wftm) {
+            _path[1] = _token_out;
+        } else {
+            _path[1] = address(wftm);
+            _path[2] = _token_out;
         }
     }
 

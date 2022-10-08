@@ -119,8 +119,11 @@ def test_migrated_strategy_can_call_harvest(
 
     for i in range(strategy.numLenders()):
         interface.IGenericLenderExt(strategy.lenders(i)).setDustThreshold(0, {'from':strategist})
-    
+
+    # hero-borg: the first harvest deploys the want but returns 0 profit, the second harvest reports the profit
     strategy.harvest({"from": gov})
+    strategy.harvest({"from": gov})
+
     assert vault.strategies(strategy).dict()["totalGain"] >= 10 ** token.decimals()
 
     # But after migrated it cannot be added back

@@ -7,7 +7,7 @@ params = [
         "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", # token
         "0x625E7708f30cA75bfd92586e17077590C60eb4cD", # aToken
         "0xB715808a78F6041E46d61Cb123C9B4A27056AE9C", # qiToken
-        ['Aave'],
+        ['Aave', 'Benqi'],
         "0x9f8c163cba728e99993abe7495f06c0a3c8ac8b9", # whale
         id="USDC Generic Lender",
     ),
@@ -15,7 +15,7 @@ params = [
         "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", # token
         "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", # aToken
         "0x334AD834Cd4481BB02d09615E7c11a00579A7909", # qiToken
-        ['Aave'],
+        ['Aave', 'Benqi'],
         "0x9ab2de34a33fb459b538c43f251eb825645e8595", # whale
         id="WETH Generic Lender",
     ),
@@ -23,7 +23,7 @@ params = [
         "0x2b2C81e08f1Af8835a78Bb2A90AE924ACE0eA4bE", # token
         "0x513c7E3a9c69cA3e22550eF58AC1C0088e918FFf", # aToken
         "0xF362feA9659cf036792c9cb02f8ff8198E21B4cB", # qiToken
-        ['Aave'],
+        ['Aave', 'Benqi'],
         "0xf362fea9659cf036792c9cb02f8ff8198e21b4cb", # whale
         id="sAVAX Generic Lender",
     ),

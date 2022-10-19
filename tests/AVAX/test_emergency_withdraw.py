@@ -7,17 +7,23 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_emergency_exit_aave(strategyAddAave, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, amount):
-    run_emergency_exit_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, amount)
+def test_emergency_exit_aave(strategyAddAave, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, amount):
+    run_emergency_exit_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, amount)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_emergency_exit_benqi(strategyAddBenqi, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, amount):
-    run_emergency_exit_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, amount)
+def test_emergency_exit_benqi(strategyAddBenqi, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, amount):
+    run_emergency_exit_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, amount)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_emergency_exit_benqi(strategyAddIB, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, amount):
+    run_emergency_exit_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, amount)
+
 
 def run_emergency_exit_test(
     token,
     aToken,
     qiToken,
+    iToken,
     chain,
     whale,
     vault,

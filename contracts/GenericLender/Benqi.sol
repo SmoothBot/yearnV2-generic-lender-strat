@@ -36,8 +36,8 @@ contract Benqi is GenericLenderBase {
 
     uint256 public dustThreshold;
 
-    uint256 public minCompToSell = 1 ether;
-    uint256 public minAvaxToSell = 0.01 ether;
+    uint256 public minCompToSell = 10 ether;
+    uint256 public minAvaxToSell = 0.1 ether;
 
     CErc20TimestampI public cToken;
 

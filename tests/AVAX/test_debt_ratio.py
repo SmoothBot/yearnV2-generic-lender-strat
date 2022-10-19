@@ -21,6 +21,17 @@ def test_up_down_benqi(strategyAddBenqi, qiToken, lenders, token, chain, whale, 
         qiToken = None
     run_up_down_test(qiToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
 
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_up_down_IB(strategyAddIB, iToken, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
+    if 'IB' not in lenders:
+        pytest.skip()
+    # sAavax doesn't like us to call mint(0), so we don't do that
+    if(token.symbol() == 'sAVAX'):
+        qiToken = None
+    run_up_down_test(iToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
+
+
+
 def run_up_down_test(
     cToken,
     token,

@@ -36,8 +36,8 @@ contract Benqi is GenericLenderBase {
 
     uint256 public dustThreshold;
 
-    uint256 public minCompToSell = 1e10 ether;
-    uint256 public minAvaxToSell = 1e10 ether;
+    uint256 public minCompToSell = 1 ether;
+    uint256 public minAvaxToSell = 0.01 ether;
 
     CErc20TimestampI public cToken;
 
@@ -58,6 +58,8 @@ contract Benqi is GenericLenderBase {
         cToken = CErc20TimestampI(_cToken);
         require(cToken.underlying() == address(want), "WRONG CTOKEN");
         want.safeApprove(_cToken, uint256(-1));
+        IERC20(comp).safeApprove(uniswapRouter, uint256(-1));
+        IERC20(wavax).safeApprove(uniswapRouter, uint256(-1));
         dustThreshold = 10_000;
     }
 
@@ -76,6 +78,14 @@ contract Benqi is GenericLenderBase {
     //adjust dust threshol
     function setDustThreshold(uint256 amount) external management {
         dustThreshold = amount;
+    }
+
+    function setMinCompToSell(uint256 amount) external management {
+        minCompToSell = amount;
+    }
+
+    function setMinAvaxToSell(uint256 amount) external management {
+        minAvaxToSell = amount;
     }
 
     function nav() external view override returns (uint256) {
@@ -229,13 +239,13 @@ contract Benqi is GenericLenderBase {
 
         if (_comp > minCompToSell) {
             address[] memory path1 = getTokenOutPath(comp, address(want));
-            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path1, address(this), now);
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path1, address(this), block.timestamp);
         }
         IWavax(payable(wavax)).deposit{value: address(this).balance}();
         uint256 _avax = IERC20(wavax).balanceOf(address(this));
         if (_avax > minAvaxToSell) {
             address[] memory path2 = getTokenOutPath(wavax, address(want));
-            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_avax, uint256(0), path2, address(this), now);
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_avax, uint256(0), path2, address(this), block.timestamp);
         }
     }
 

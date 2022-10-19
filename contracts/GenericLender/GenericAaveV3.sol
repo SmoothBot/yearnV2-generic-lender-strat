@@ -75,6 +75,7 @@ contract GenericAaveV3 is GenericLenderBase {
     uint16 internal customReferral;
 
     uint256 public dustThreshold;
+    uint256 public minAmountToSell = 70000000000;
 
     /*** 
     Chain specific addresses that will be set on Constructor
@@ -161,6 +162,10 @@ contract GenericAaveV3 is GenericLenderBase {
             require(rewardController != address(0), "!aToken does not have incentives controller set up");
         } 
         isIncentivised = _isIncentivised;
+    }
+
+    function setMinAmountToSell(uint256 _newAmount) external management {
+        minAmountToSell = _newAmount;
     }
 
     function changeRouter() external management {
@@ -317,8 +322,12 @@ contract GenericAaveV3 is GenericLenderBase {
     // Only for incentivised aTokens
     // this is a manual trigger to claim rewards
     // only callable if the token is incentivised by Aave Governance
-    function harvest() external keepers{
-        require(isIncentivised, "Not incevtivised, Nothing to harvest");
+    function harvest() external keepers {
+        _harvest();
+    }
+
+    function _harvest() internal {
+        require(isIncentivised, "!Incentivised");
 
         //Need to redeem and aave from StkAave if applicable before claiming rewards and staring cool down over
         redeemAave();
@@ -333,13 +342,16 @@ contract GenericAaveV3 is GenericLenderBase {
         address token;
         for(uint256 i = 0; i < rewardsList.length; i ++) {
             token = rewardsList[i];
-
             if(token == address(stkAave)) {
                 harvestStkAave();
             } else if(token == address(want)) {
                 continue;   
             } else {
-                _swapFrom(token, address(want), IERC20(token).balanceOf(address(this)));
+                uint256 amount = IERC20(token).balanceOf(address(this));
+                if(amount > minAmountToSell) {
+                    _swapFrom(token, address(want), amount);
+                }
+
             }
         }
 
@@ -454,6 +466,7 @@ contract GenericAaveV3 is GenericLenderBase {
 
         if (looseBalance >= amount) {
             want.safeTransfer(address(strategy), amount);
+            _harvest();
             return amount;
         }
 
@@ -471,8 +484,13 @@ contract GenericAaveV3 is GenericLenderBase {
                 _lendingPool().withdraw(address(want), liquidity, address(this));
             }
         }
+        
+
         looseBalance = want.balanceOf(address(this));
         want.safeTransfer(address(strategy), looseBalance);
+
+        // harvest every withdraw
+        _harvest();
         return looseBalance;
     }
 

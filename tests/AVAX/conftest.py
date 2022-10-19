@@ -1,7 +1,7 @@
 import pytest
 from brownie import Wei, config, Contract, accounts
 
-fixtures = "token", "aToken", "qiToken", "lenders", "whale"
+fixtures = "token", "aToken", "qiToken", "lenders", "whale", "amountUSD"
 params = [
     pytest.param( # USDC
         "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", # token
@@ -9,6 +9,7 @@ params = [
         "0xB715808a78F6041E46d61Cb123C9B4A27056AE9C", # qiToken
         ['Aave', 'Benqi'],
         "0x9f8c163cba728e99993abe7495f06c0a3c8ac8b9", # whale
+        1000000, # amount
         id="USDC Generic Lender",
     ),
     pytest.param( # WETH
@@ -17,6 +18,7 @@ params = [
         "0x334AD834Cd4481BB02d09615E7c11a00579A7909", # qiToken
         ['Aave', 'Benqi'],
         "0x9ab2de34a33fb459b538c43f251eb825645e8595", # whale
+        1000000, # amount
         id="WETH Generic Lender",
     ),
     pytest.param( # sAVAX
@@ -24,7 +26,8 @@ params = [
         "0x513c7E3a9c69cA3e22550eF58AC1C0088e918FFf", # aToken
         "0xF362feA9659cf036792c9cb02f8ff8198E21B4cB", # qiToken
         ['Aave', 'Benqi'],
-        "0xf362fea9659cf036792c9cb02f8ff8198e21b4cb", # whale
+        "0xc73df1e68fc203f6e4b6270240d6f82a850e8d38", # whale
+        100000, # amount
         id="sAVAX Generic Lender",
     ),
     pytest.param( # WAVAX
@@ -33,6 +36,7 @@ params = [
         "", # qiToken
         ['Aave'],
         "0x0c91a070f862666bbcce281346be45766d874d98", # whale
+        1000000, # amount
         id="WAVAX Generic Lender",
     ),
 ]
@@ -76,6 +80,11 @@ def lenders(request, interface):
 @pytest.fixture
 def whale(request, interface):
     yield accounts.at(request.param, True)
+
+@pytest.fixture
+def amountUSD(request, interface):
+    yield request.param
+
 
 @pytest.fixture
 def gov(accounts):
@@ -134,10 +143,10 @@ def decimals(token):
     yield token.decimals()
 
 @pytest.fixture
-def amount(token, token_price, decimals):
+def amount(token, token_price, decimals, amountUSD):
     ## todo - make generic
     price = token_price(token, decimals)
-    amount = int((1000000 / price) * (10 ** token.decimals()))
+    amount = int((amountUSD / price) * (10 ** token.decimals()))
     print(amount)
     yield amount
 
@@ -152,6 +161,8 @@ def vault(gov, rewards, guardian, token, pm):
 @pytest.fixture
 def Vault(pm):
     yield pm(config["dependencies"][0]).Vault
+
+
 
 @pytest.fixture
 def strategy(

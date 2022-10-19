@@ -430,7 +430,7 @@ contract Strategy is BaseStrategy {
         }
 
         (uint256 lowest, uint256 lowestApr, uint256 highest, uint256 potential) = estimateAdjustPosition();
-
+        
         if (potential > lowestApr) {
             // APR should go down after deposit so wont be withdrawing from self
             lenders[lowest].withdrawAll();

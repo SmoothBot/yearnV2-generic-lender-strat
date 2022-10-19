@@ -6,17 +6,19 @@ import brownie
 import pytest
 import conftest as config
 
+# @pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_all(strategyAllLenders, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, len(lenders))
 
+# @pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_aave(strategyAddAave, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_benqi(strategyAddBenqi, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders):
-    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders)
+def test_normal_activity_benqi(strategyAddBenqi, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
 
 def run_normal_activity_test(
     token,
@@ -30,10 +32,10 @@ def run_normal_activity_test(
     strategist,
     lenders,
     amount,
-    decimals
+    decimals,
+    lendersSize
 ):
     starting_balance = token.balanceOf(strategist)
-
     token.approve(vault, 2 ** 256 - 1, {"from": whale})
     token.approve(vault, 2 ** 256 - 1, {"from": strategist})
 
@@ -71,12 +73,11 @@ def run_normal_activity_test(
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
-        # if 'Aave' in lenders:
-        #     aToken.mint(0,{"from": whale})
         if 'Benqi' in lenders:
-            qiToken.mint(0,{"from": whale})
+            token.approve(qiToken, 1, {"from": whale})
+            qiToken.mint(1,{"from": whale})
         if 'Aave' in lenders:
-            for j in range(len(lenders)):
+            for j in range(lendersSize):
                 lender = interface.IGenericLender(strategy.lenders(j))
                 if lender.lenderName() == 'Aave':
                     GenericAaveV3.at(lender.address).harvest({"from": gov})

@@ -49,7 +49,7 @@ def run_withdraw_all_test(
     lender.withdrawAll({'from':gov})
 
     # check all funds were liquidated in the lender and sent to the strat
-    assert lender.nav() == 0
+    assert lender.nav() / 10 ** token.decimals() < 1e-5
     assert pytest.approx(strategy.estimatedTotalAssets(), rel=1e-5) == amount
 
     # check it can harvest

@@ -27,7 +27,7 @@ contract Benqi is GenericLenderBase {
     using Address for address;
     using SafeMath for uint256;
 
-    uint256 private constant blocksPerYear = 31_536_000;
+    uint256 private constant blocksPerYear = 31_557_600;
     address public constant uniswapRouter = address(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
     address public constant comp = address(0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5);
     address public constant wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
@@ -36,12 +36,10 @@ contract Benqi is GenericLenderBase {
 
     uint256 public dustThreshold;
 
-    uint256 public minCompToSell = 0 ether;
-    uint256 public minAvaxToSell = 0 ether;
+    uint256 public minCompToSell = 1e10 ether;
+    uint256 public minAvaxToSell = 1e10 ether;
 
     CErc20TimestampI public cToken;
-
-    
 
     constructor(
         address _strategy,
@@ -63,12 +61,15 @@ contract Benqi is GenericLenderBase {
         dustThreshold = 10_000;
     }
 
+    receive() external payable {}
+
+
     function cloneBenqiLender(
         address _strategy,
         string memory _name,
         address _cToken
-    ) external returns (address newLender) {
-        newLender = _clone(_strategy, _name);
+    ) external returns (address payable newLender) {
+        newLender = payable(_clone(_strategy, _name));
         Benqi(newLender).initialize(_cToken);
     }
 
@@ -106,9 +107,58 @@ contract Benqi is GenericLenderBase {
     }
 
     function _apr() internal view returns (uint256) {
-        //TODO ADD DISTRIBUTION APR
-        return cToken.supplyRatePerTimestamp().mul(blocksPerYear);
+        return (cToken.supplyRatePerTimestamp().add(compBlockShareInWant(0, false))).mul(blocksPerYear);
     }
+
+    function compBlockShareInWant(uint256 change, bool add) public view returns (uint256) {
+        //QI tokens
+        //comp speed is amount to borrow or deposit (so half the total distribution for want)
+        uint256 compDistributionPerBlock = ComptrollerBenqiInterface(unitroller).supplyRewardSpeeds(0, address(cToken));
+        uint256 wavaxDistributionPerBlock = ComptrollerBenqiInterface(unitroller).supplyRewardSpeeds(1, address(cToken));
+
+        //convert to per dolla
+        uint256 totalSupply = cToken.totalSupply().mul(cToken.exchangeRateStored()).div(1e18);
+        if (add) {
+            totalSupply = totalSupply.add(change);
+        } else {
+            totalSupply = totalSupply.sub(change);
+        }
+
+        uint256 compShareSupply = 0;
+        uint256 wavaxShareSupply = 0;
+        if (totalSupply > 0) {
+            compShareSupply = compDistributionPerBlock.mul(1e18).div(totalSupply);
+            wavaxShareSupply = wavaxDistributionPerBlock.mul(1e18).div(totalSupply);
+        }
+
+        uint256 estimatedWantFromComp = priceCheck(comp, address(want), compShareSupply);
+        uint256 estimatedWantFromWavax = priceCheck(wavax, address(want), wavaxShareSupply);
+        uint256 compRate;
+        uint256 wavaxRate;
+        if (estimatedWantFromComp != 0) {
+            compRate = estimatedWantFromComp.mul(9).div(10); //10% pessimist
+        }
+        if (estimatedWantFromWavax != 0) {
+            wavaxRate = estimatedWantFromWavax.mul(9).div(10); //10% pessimist
+        }
+
+        return (compRate.add(wavaxRate));
+    }
+
+    function priceCheck(
+        address start,
+        address end,
+        uint256 _amount
+    ) public view returns (uint256) {
+        if (_amount == 0) {
+            return 0;
+        }
+        address[] memory path = getTokenOutPath(start, end);
+        uint256[] memory amounts = IUniswapV2Router02(uniswapRouter).getAmountsOut(_amount, path);
+
+        return amounts[amounts.length - 1];
+    }
+
 
     function weightedApr() external view override returns (uint256) {
         uint256 a = _apr();
@@ -173,30 +223,30 @@ contract Benqi is GenericLenderBase {
     function _disposeOfComp() internal {
         ComptrollerBenqiInterface comptroller = ComptrollerBenqiInterface(unitroller);
 
-        comptroller.claimReward(0, address(this));
-        comptroller.claimReward(1, address(this));
+        comptroller.claimReward(0, payable(address(this)));
+        comptroller.claimReward(1, payable(address(this)));
         uint256 _comp = IERC20(comp).balanceOf(address(this));
 
         if (_comp > minCompToSell) {
-            address[] memory path = getTokenOutPath(comp, address(want));
-            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path, address(this), now);
+            address[] memory path1 = getTokenOutPath(comp, address(want));
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path1, address(this), now);
         }
         IWavax(payable(wavax)).deposit{value: address(this).balance}();
         uint256 _avax = IERC20(wavax).balanceOf(address(this));
         if (_avax > minAvaxToSell) {
-            address[] memory path = getTokenOutPath(wavax, address(want));
-            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_comp, uint256(0), path, address(this), now);
+            address[] memory path2 = getTokenOutPath(wavax, address(want));
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(_avax, uint256(0), path2, address(this), now);
         }
     }
 
     function getTokenOutPath(address _token_in, address _token_out) internal pure returns (address[] memory _path) {
-        bool is_wftm = _token_in == address(wftm) || _token_out == address(wftm);
-        _path = new address[](is_wftm ? 2 : 3);
+        bool is_wavax = _token_in == address(wavax) || _token_out == address(wavax);
+        _path = new address[](is_wavax ? 2 : 3);
         _path[0] = _token_in;
-        if (is_wftm) {
+        if (is_wavax) {
             _path[1] = _token_out;
         } else {
-            _path[1] = address(wftm);
+            _path[1] = address(wavax);
             _path[2] = _token_out;
         }
     }

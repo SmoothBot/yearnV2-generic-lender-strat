@@ -30,6 +30,7 @@ interface iController {
 
 interface IERC20Extended is IERC20 {
     function decimals() external view returns (uint256);
+
     function symbol() external view returns (string memory);
 }
 
@@ -228,7 +229,7 @@ contract HundredFinanceFantom is GenericLenderBase {
         if (amountInGauge > 0) {
             guage.withdraw(amountInGauge);
         }
-    
+
         //dont care about errors here. we want to exit what we can
         uint256 amountCToken = convertFromUnderlying(amount);
         cToken.redeem(Math.min(amountCToken, cToken.balanceOf(address(this))));

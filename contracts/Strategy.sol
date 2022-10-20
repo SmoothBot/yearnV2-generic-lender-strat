@@ -44,13 +44,21 @@ contract Strategy is BaseStrategy {
 
     event Cloned(address indexed clone);
 
-    constructor(address _vault, address _weth, address _uniswapRouter) public BaseStrategy(_vault) {
+    constructor(
+        address _vault,
+        address _weth,
+        address _uniswapRouter
+    ) public BaseStrategy(_vault) {
         uniswapRouter = _uniswapRouter;
         weth = _weth;
         debtThreshold = 100 * 1e18;
     }
 
-    function clone(address _vault, address _weth, address _keeper) external returns (address newStrategy) {
+    function clone(
+        address _vault,
+        address _weth,
+        address _keeper
+    ) external returns (address newStrategy) {
         newStrategy = this.clone(_vault, msg.sender, msg.sender, msg.sender, _weth, _keeper);
     }
 
@@ -369,7 +377,6 @@ contract Strategy is BaseStrategy {
             return (_profit, _loss, _debtPayment);
         }
 
-
         uint256 debt = vault.strategies(address(this)).totalDebt;
 
         if (total >= debt) {
@@ -430,7 +437,7 @@ contract Strategy is BaseStrategy {
         }
 
         (uint256 lowest, uint256 lowestApr, uint256 highest, uint256 potential) = estimateAdjustPosition();
-        
+
         if (potential > lowestApr) {
             // APR should go down after deposit so wont be withdrawing from self
             lenders[lowest].withdrawAll();

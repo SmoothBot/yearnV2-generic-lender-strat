@@ -35,13 +35,7 @@ interface ILiquidStrategy {
 
     function setController(address _controller) external;
 
-    function execute(address _target, bytes calldata _data)
-        external
-        payable
-        returns (bytes memory response);
+    function execute(address _target, bytes calldata _data) external payable returns (bytes memory response);
 
-    function execute(bytes calldata _data)
-        external
-        payable
-        returns (bytes memory response);
+    function execute(bytes calldata _data) external payable returns (bytes memory response);
 }

@@ -34,8 +34,6 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
     address public constant spiritRouter = address(0x16327E3FbDaCA3bcF7E38F5Af2599D2DDc33aE52);
     address public constant hnd = address(0x10010078a54396F62c96dF8532dc2B4847d47ED3);
     address public constant wftm = address(0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83);
-    
-
 
     // IGuage public guage;
     address public minter;
@@ -54,7 +52,7 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
     ILiquidHundredChef public chef;
     IGuage public guage;
     uint256 public pid;
-    
+
     constructor(
         address _strategy,
         string memory name,
@@ -66,11 +64,21 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
         _initialize(_cToken, _guage, _chef, _pid);
     }
 
-    function initialize(address _cToken, address _guage, address _chef, uint256 _pid) public {
+    function initialize(
+        address _cToken,
+        address _guage,
+        address _chef,
+        uint256 _pid
+    ) public {
         _initialize(_cToken, _guage, _chef, _pid);
     }
 
-    function _initialize(address _cToken, address _guage, address _chef, uint256 _pid) internal {
+    function _initialize(
+        address _cToken,
+        address _guage,
+        address _chef,
+        uint256 _pid
+    ) internal {
         require(address(cToken) == address(0), "Generic HND LQDR already initialized");
         cToken = CErc20I(_cToken);
         guage = IGuage(_guage);
@@ -166,7 +174,6 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
         return (compRate);
     }
 
-
     //WARNING. manipulatable and simple routing. Only use for safe functions
     function priceCheck(
         address start,
@@ -218,7 +225,6 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
 
     // withdraw an amount including any want balance
     function _withdraw(uint256 amount) internal returns (uint256) {
-
         // We withdraw all from the masterchef to save us converting
         // This looks lazy, but its reduces needless complexity.
         uint256 staked = cTokenStaked();
@@ -262,7 +268,7 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
             if (toWithdraw > liquidity) {
                 toWithdraw = liquidity;
             }
-    
+
             if (toWithdraw > dustThreshold) {
                 require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
             }
@@ -277,7 +283,7 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
 
         // Redeposit what is left
         stakeCToken(cToken.balanceOf(address(this)));
-        
+
         return looseBalance;
     }
 
@@ -315,7 +321,6 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
                 IUniswapV2Router02(spookyRouter).swapExactTokensForTokens(_ib, uint256(0), path, address(this), now);
             }
         }
-        
     }
 
     function getTokenOutPath(address _token_in, address _token_out) internal pure returns (address[] memory _path) {
@@ -394,10 +399,7 @@ contract HundredFinanceFantomLqdr is GenericLenderBase {
 
     function hasAssets() external view override returns (bool) {
         //return cToken.balanceOf(address(this)) > 0;
-        return
-            cToken.balanceOf(address(this)) > dustThreshold ||
-            want.balanceOf(address(this)) > 0 ||
-            cTokenStaked() > dustThreshold;
+        return cToken.balanceOf(address(this)) > dustThreshold || want.balanceOf(address(this)) > 0 || cTokenStaked() > dustThreshold;
     }
 
     function aprAfterDeposit(uint256 amount) external view override returns (uint256) {

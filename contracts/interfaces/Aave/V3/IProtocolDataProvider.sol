@@ -2,7 +2,7 @@
 pragma solidity >=0.6.12;
 pragma experimental ABIEncoderV2;
 
-import './IPoolAddressesProvider.sol';
+import "./IPoolAddressesProvider.sol";
 
 interface IProtocolDataProvider {
     struct TokenData {
@@ -10,10 +10,7 @@ interface IProtocolDataProvider {
         address tokenAddress;
     }
 
-    function ADDRESSES_PROVIDER()
-        external
-        view
-        returns (IPoolAddressesProvider);
+    function ADDRESSES_PROVIDER() external view returns (IPoolAddressesProvider);
 
     function getAllReservesTokens() external view returns (TokenData[] memory);
 
@@ -34,12 +31,12 @@ interface IProtocolDataProvider {
             bool isActive,
             bool isFrozen
         );
-    
+
     /**
-    * Returns the efficiency mode category of the reserve
-    * @param asset The address of the underlying asset of the reserve
-    * @return The eMode id of the reserve
-    */
+     * Returns the efficiency mode category of the reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @return The eMode id of the reserve
+     */
     function getReserveEModeCategory(address asset) external view returns (uint256);
 
     function getReserveData(address asset)
@@ -53,7 +50,7 @@ interface IProtocolDataProvider {
             uint256 totalVariableDebt,
             uint256 liquidityRate,
             uint256 variableBorrowRate,
-            uint256 stableBorrowRate,   
+            uint256 stableBorrowRate,
             uint256 averageStableBorrowRate,
             uint256 liquidityIndex,
             uint256 variableBorrowIndex,

@@ -3,6 +3,7 @@ pragma solidity 0.6.12;
 
 import "../Compound/InterestRateModel.sol";
 import "../Compound/ComptrollerI.sol";
+
 /// @dev Original contracts here -> https://aurorascan.dev/address/0x4f0d864b1ABf4B701799a0b30b57A22dFEB5917b#code
 
 /**
@@ -16,33 +17,32 @@ interface CTokenTimestampI {
     /**
      * @notice Event emitted when interest is accrued
      */
-    event AccrueInterest(uint cashPrior, uint interestAccumulated, uint borrowIndex, uint totalBorrows);
+    event AccrueInterest(uint256 cashPrior, uint256 interestAccumulated, uint256 borrowIndex, uint256 totalBorrows);
 
     /**
      * @notice Event emitted when tokens are minted
      */
-    event Mint(address minter, uint mintAmount, uint mintTokens);
+    event Mint(address minter, uint256 mintAmount, uint256 mintTokens);
 
     /**
      * @notice Event emitted when tokens are redeemed
      */
-    event Redeem(address redeemer, uint redeemAmount, uint redeemTokens);
+    event Redeem(address redeemer, uint256 redeemAmount, uint256 redeemTokens);
 
     /**
      * @notice Event emitted when underlying is borrowed
      */
-    event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows);
+    event Borrow(address borrower, uint256 borrowAmount, uint256 accountBorrows, uint256 totalBorrows);
 
     /**
      * @notice Event emitted when a borrow is repaid
      */
-    event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows);
+    event RepayBorrow(address payer, address borrower, uint256 repayAmount, uint256 accountBorrows, uint256 totalBorrows);
 
     /**
      * @notice Event emitted when a borrow is liquidated
      */
-    event LiquidateBorrow(address liquidator, address borrower, uint repayAmount, address auTokenCollateral, uint seizeTokens);
-
+    event LiquidateBorrow(address liquidator, address borrower, uint256 repayAmount, address auTokenCollateral, uint256 seizeTokens);
 
     /*** Admin Events ***/
 
@@ -69,65 +69,75 @@ interface CTokenTimestampI {
     /**
      * @notice Event emitted when the reserve factor is changed
      */
-    event NewReserveFactor(uint oldReserveFactorMantissa, uint newReserveFactorMantissa);
+    event NewReserveFactor(uint256 oldReserveFactorMantissa, uint256 newReserveFactorMantissa);
 
     /**
      * @notice Event emitted when the protocol seize share is changed
      */
-    event NewProtocolSeizeShare(uint oldProtocolSeizeShareMantissa, uint newProtocolSeizeShareMantissa);
+    event NewProtocolSeizeShare(uint256 oldProtocolSeizeShareMantissa, uint256 newProtocolSeizeShareMantissa);
 
     /**
      * @notice Event emitted when the reserves are added
      */
-    event ReservesAdded(address benefactor, uint addAmount, uint newTotalReserves);
+    event ReservesAdded(address benefactor, uint256 addAmount, uint256 newTotalReserves);
 
     /**
      * @notice Event emitted when the reserves are reduced
      */
-    event ReservesReduced(address admin, uint reduceAmount, uint newTotalReserves);
+    event ReservesReduced(address admin, uint256 reduceAmount, uint256 newTotalReserves);
 
     /**
      * @notice EIP20 Transfer event
      */
-    event Transfer(address indexed from, address indexed to, uint amount);
+    event Transfer(address indexed from, address indexed to, uint256 amount);
 
     /**
      * @notice EIP20 Approval event
      */
-    event Approval(address indexed owner, address indexed spender, uint amount);
-
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
 
     /*** User Interface ***/
 
-    function transfer(address dst, uint amount) external returns (bool);
+    function transfer(address dst, uint256 amount) external returns (bool);
 
-    function transferFrom(address src, address dst, uint amount) external returns (bool);
+    function transferFrom(
+        address src,
+        address dst,
+        uint256 amount
+    ) external returns (bool);
 
-    function approve(address spender, uint amount) external returns (bool);
+    function approve(address spender, uint256 amount) external returns (bool);
 
     function allowance(address owner, address spender) external view returns (uint256);
 
     function balanceOf(address owner) external view returns (uint256);
 
-    function balanceOfUnderlying(address owner) external returns (uint);
+    function balanceOfUnderlying(address owner) external returns (uint256);
 
-    function getAccountSnapshot(address account) external view returns (uint, uint, uint); 
+    function getAccountSnapshot(address account)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        );
 
-    function borrowRatePerTimestamp() external view returns (uint);
+    function borrowRatePerTimestamp() external view returns (uint256);
 
-    function supplyRatePerTimestamp() external view returns (uint);
+    function supplyRatePerTimestamp() external view returns (uint256);
 
-    function totalBorrowsCurrent() external returns (uint);
+    function totalBorrowsCurrent() external returns (uint256);
 
-    function borrowBalanceCurrent(address account) external returns (uint);
+    function borrowBalanceCurrent(address account) external returns (uint256);
 
-    function borrowBalanceStored(address account) external view returns (uint);
+    function borrowBalanceStored(address account) external view returns (uint256);
 
-    function exchangeRateCurrent() external returns (uint);
+    function exchangeRateCurrent() external returns (uint256);
 
     function exchangeRateStored() external view returns (uint256);
 
-    function getCash() external view returns (uint);
+    function getCash() external view returns (uint256);
 
     function accrueInterest() external returns (uint256);
 
@@ -137,7 +147,11 @@ interface CTokenTimestampI {
 
     function reserveFactorMantissa() external view returns (uint256);
 
-    function seize(address liquidator, address borrower, uint seizeTokens) external;
+    function seize(
+        address liquidator,
+        address borrower,
+        uint256 seizeTokens
+    ) external;
 
     function totalBorrows() external view returns (uint256);
 
@@ -147,17 +161,16 @@ interface CTokenTimestampI {
     // function getBorrowDataOfAccount(address account) public view virtual returns (uint, uint);
     // function getSupplyDataOfOneAccount(address account) public view virtual returns (uint, uint);
     // function getSupplyDataOfTwoAccount(address account1, address account2) public view virtual returns (uint, uint, uint);
-
 }
 
 interface CErc20TimestampI is CTokenTimestampI {
-    function mint(uint256 mintAmount) external returns (uint);
+    function mint(uint256 mintAmount) external returns (uint256);
 
-    function redeem(uint256 redeemTokens) external returns (uint);
+    function redeem(uint256 redeemTokens) external returns (uint256);
 
     function comptroller() external view returns (address);
 
-    function redeemUnderlying(uint256 redeemAmount) external returns (uint);
+    function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
 
     function borrow(uint256 borrowAmount) external;
 
@@ -169,8 +182,7 @@ interface CErc20TimestampI is CTokenTimestampI {
         address borrower,
         uint256 repayAmount,
         CTokenI cTokenCollateral
-    ) external ;
+    ) external;
 
     function underlying() external view returns (address);
-
 }

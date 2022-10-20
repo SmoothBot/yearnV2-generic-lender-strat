@@ -33,7 +33,6 @@ contract Benqi is GenericLenderBase {
     address public constant wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
     address public constant unitroller = address(0x486Af39519B4Dc9a7fCcd318217352830E8AD9b4);
 
-
     uint256 public dustThreshold;
 
     uint256 public minCompToSell = 10 ether;
@@ -64,7 +63,6 @@ contract Benqi is GenericLenderBase {
     }
 
     receive() external payable {}
-
 
     function cloneBenqiLender(
         address _strategy,
@@ -168,7 +166,6 @@ contract Benqi is GenericLenderBase {
 
         return amounts[amounts.length - 1];
     }
-
 
     function weightedApr() external view override returns (uint256) {
         uint256 a = _apr();

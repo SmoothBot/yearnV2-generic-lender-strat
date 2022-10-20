@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-interface  ILiquidHundredChef {
+interface ILiquidHundredChef {
     // using SafeMath for uint256;
     // using BoringMath128 for uint256;
     // using BoringERC20 for IERC20;
@@ -80,10 +80,7 @@ interface  ILiquidHundredChef {
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
     /// @return pending TOKEN reward for a given user.
-    function pendingToken(uint256 _pid, address _user)
-        external
-        view
-        returns (uint256 pending);
+    function pendingToken(uint256 _pid, address _user) external view returns (uint256 pending);
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
     /// @param pids Pool IDs of all to be updated. Make sure to update all active pools.
@@ -105,7 +102,6 @@ interface  ILiquidHundredChef {
         uint256 amount,
         address to
     ) external;
-
 
     /// @notice Withdraw LP tokens from MCV2.
     /// @param pid The index of the pool. See `poolInfo`.

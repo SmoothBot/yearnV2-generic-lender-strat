@@ -7,17 +7,23 @@ import pytest
 import conftest as config
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_withdraw_all_aave(strategyAddAave, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando):
-    run_withdraw_all_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando)
+def test_withdraw_all_aave(strategyAddAave, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando):
+    run_withdraw_all_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_withdraw_all_benqi(strategyAddBenqi, token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando):
-    run_withdraw_all_test(token, aToken, qiToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando)
+def test_withdraw_all_benqi(strategyAddBenqi, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando):
+    run_withdraw_all_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_withdraw_all_benqi(strategyAddIB, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando):
+    run_withdraw_all_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, rando)
+
 
 def run_withdraw_all_test(
     token,
     aToken,
     qiToken,
+    iToken,
     chain,
     whale,
     vault,

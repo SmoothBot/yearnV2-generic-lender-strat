@@ -6,17 +6,17 @@ import brownie
 import pytest
 import conftest as config
 
-@pytest.mark.skip
+#@pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_all(strategyAllLenders, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
     run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, len(lenders))
 
-@pytest.mark.skip
+#@pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_aave(strategyAddAave, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
     run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
 
-@pytest.mark.skip
+#@pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_normal_activity_benqi(strategyAddBenqi, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
     run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
@@ -87,11 +87,12 @@ def run_normal_activity_test(
                 lender = interface.IGenericLender(strategy.lenders(j))
                 if lender.lenderName() == 'Aave':
                     GenericAaveV3.at(lender.address).harvest({"from": gov})
+
         if 'IB' in lenders:
             token.approve(iToken, 1, {"from": whale})
             iToken.mint(1,{"from": whale})
         strategy.harvest({"from": strategist})
-
+        
         # genericStateOfStrat(strategy, currency, vault)
         # genericStateOfVault(vault, currency)
 

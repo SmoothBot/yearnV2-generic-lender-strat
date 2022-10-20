@@ -26,10 +26,6 @@ contract GenericIronBankAVAX is GenericLenderBase {
 
     uint256 public dustThreshold;
 
-    bool public ignorePrinting;
-
-    bool public useSpirit;
-
     CErc20I public cToken;
 
     constructor(
@@ -68,10 +64,6 @@ contract GenericIronBankAVAX is GenericLenderBase {
     //adjust dust threshol
     function setDustThreshold(uint256 amount) external management {
         dustThreshold = amount;
-    }
-
-    function setUseSpirit(bool _useSpirit) external management {
-        useSpirit = _useSpirit;
     }
 
     function _nav() internal view returns (uint256) {
@@ -126,7 +118,6 @@ contract GenericIronBankAVAX is GenericLenderBase {
         uint256 balanceUnderlying = cToken.balanceOfUnderlying(address(this));
         uint256 looseBalance = want.balanceOf(address(this));
         uint256 total = balanceUnderlying.add(looseBalance);
-
         if (amount.add(dustThreshold) >= total) {
             //cant withdraw more than we own. so withdraw all we can
             if (balanceUnderlying > dustThreshold) {
@@ -151,7 +142,6 @@ contract GenericIronBankAVAX is GenericLenderBase {
 
         if (liquidity > 1) {
             uint256 toWithdraw = amount.sub(looseBalance);
-
             if (toWithdraw > liquidity) {
                 toWithdraw = liquidity;
             }

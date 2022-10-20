@@ -91,7 +91,7 @@ def test_selling_benqi_avax(
     amount0 = wavax.balanceOf(lenderBenqi)
     print(amount0)
 
-    lenderBenqi.withdraw(1, {'from': gov})
+    lenderBenqi.withdraw(10 ** (decimals - 4), {'from': gov})
 
     print(wavax.balanceOf(lenderBenqi))
     assert wavax.balanceOf(lenderBenqi) < amount0
@@ -130,7 +130,7 @@ def test_selling_benqi_comp(
     amount0 = qi_comp.balanceOf(lenderBenqi)
     print(amount0)
 
-    lenderBenqi.withdraw(1, {'from': gov})
+    lenderBenqi.withdraw(10 ** (decimals - 4) , {'from': gov})
 
     print(qi_comp.balanceOf(lenderBenqi))
     assert qi_comp.balanceOf(lenderBenqi) < amount0

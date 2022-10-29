@@ -30,6 +30,7 @@ interface iController {
 
 interface IERC20Extended is IERC20 {
     function decimals() external view returns (uint256);
+
     function symbol() external view returns (string memory);
 }
 
@@ -70,18 +71,30 @@ contract GenericHundredFinance is GenericLenderBase {
         string memory name,
         address _cToken,
         address _guage,
-        address _weth, 
+        address _weth,
         address _router,
         address _hnd
     ) public GenericLenderBase(_strategy, name) {
         _initialize(_cToken, _guage, _weth, _router, _hnd);
     }
 
-    function initialize(address _cToken, address _guage, address _weth, address _router, address _hnd) external {
+    function initialize(
+        address _cToken,
+        address _guage,
+        address _weth,
+        address _router,
+        address _hnd
+    ) external {
         _initialize(_cToken, _guage, _weth, _router, _hnd);
     }
 
-    function _initialize(address _cToken, address _guage, address _weth, address _router, address _hnd) internal {
+    function _initialize(
+        address _cToken,
+        address _guage,
+        address _weth,
+        address _router,
+        address _hnd
+    ) internal {
         require(address(cToken) == address(0), "GenericIB already initialized");
         router = _router;
         hnd = _hnd;
@@ -102,7 +115,7 @@ contract GenericHundredFinance is GenericLenderBase {
         string memory _name,
         address _cToken,
         address _guage,
-        address _weth, 
+        address _weth,
         address _router,
         address _hnd
     ) external returns (address newLender) {
@@ -236,7 +249,7 @@ contract GenericHundredFinance is GenericLenderBase {
         if (amountInGauge > 0) {
             guage.withdraw(amountInGauge);
         }
-    
+
         //dont care about errors here. we want to exit what we can
         uint256 amountCToken = convertFromUnderlying(amount);
         cToken.redeem(Math.min(amountCToken, cToken.balanceOf(address(this))));
@@ -288,7 +301,7 @@ contract GenericHundredFinance is GenericLenderBase {
                 require(cToken.redeemUnderlying(toWithdraw) == 0, "ctoken: redeemUnderlying fail");
             }
         }
-    
+
         if (!ignorePrinting) {
             _disposeOfComp();
         }

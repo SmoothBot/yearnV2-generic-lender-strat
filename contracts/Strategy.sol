@@ -44,13 +44,21 @@ contract Strategy is BaseStrategy {
 
     event Cloned(address indexed clone);
 
-    constructor(address _vault, address _weth, address _uniswapRouter) public BaseStrategy(_vault) {
+    constructor(
+        address _vault,
+        address _weth,
+        address _uniswapRouter
+    ) public BaseStrategy(_vault) {
         uniswapRouter = _uniswapRouter;
         weth = _weth;
         debtThreshold = 100 * 1e18;
     }
 
-    function clone(address _vault, address _weth, address _keeper) external returns (address newStrategy) {
+    function clone(
+        address _vault,
+        address _weth,
+        address _keeper
+    ) external returns (address newStrategy) {
         newStrategy = this.clone(_vault, msg.sender, msg.sender, msg.sender, _weth, _keeper);
     }
 

@@ -8,7 +8,7 @@ params = [
         "0x625E7708f30cA75bfd92586e17077590C60eb4cD", # aToken
         "0xB715808a78F6041E46d61Cb123C9B4A27056AE9C", # qiToken
         "0xEc5Aa19566Aa442C8C50f3C6734b6Bb23fF21CD7", # iToken
-        ['Aave', 'Benqi', 'IB'],
+        ['Aave'], #, 'Benqi', 'IB'],
         "0x9f8c163cba728e99993abe7495f06c0a3c8ac8b9", # whale
         1000000, # amount
         id="USDC Generic Lender",
@@ -18,40 +18,50 @@ params = [
         "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", # aToken
         "0x334AD834Cd4481BB02d09615E7c11a00579A7909", # qiToken
         "0x338EEE1F7B89CE6272f302bDC4b952C13b221f1d", # iToken
-        ['Aave', 'Benqi', 'IB'],
+        ['Aave'], #, 'Benqi', 'IB'],
         "0x9ab2de34a33fb459b538c43f251eb825645e8595", # whale
         1000000, # amount
         id="WETH Generic Lender",
     ),
-    pytest.param( # sAVAX
-        "0x2b2C81e08f1Af8835a78Bb2A90AE924ACE0eA4bE", # token
-        "0x513c7E3a9c69cA3e22550eF58AC1C0088e918FFf", # aToken
-        "0xF362feA9659cf036792c9cb02f8ff8198E21B4cB", # qiToken
-        "", # iToken
-        ['Aave', 'Benqi'],
-        "0xc73df1e68fc203f6e4b6270240d6f82a850e8d38", # whale
-        100000, # amount
-        id="sAVAX Generic Lender",
-    ),
+    # pytest.param( # sAVAX
+    #     "0x2b2C81e08f1Af8835a78Bb2A90AE924ACE0eA4bE", # token
+    #     "0x513c7E3a9c69cA3e22550eF58AC1C0088e918FFf", # aToken
+    #     "0xF362feA9659cf036792c9cb02f8ff8198E21B4cB", # qiToken
+    #     "", # iToken
+    #     ['Aave'], #, 'Benqi'],
+    #     "0xc73df1e68fc203f6e4b6270240d6f82a850e8d38", # whale
+    #     100000, # amount
+    #     id="sAVAX Generic Lender",
+    # ),
     pytest.param( # WAVAX
         "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7", # token
         "0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97", # aToken
         "", # qiToken
         "0xb3c68d69E95B095ab4b33B4cB67dBc0fbF3Edf56", # iToken
-        ['Aave', 'IB'],
+        ['Aave'], #, 'IB'],
         "0x0c91a070f862666bbcce281346be45766d874d98", # whale
         1000000, # amount
         id="WAVAX Generic Lender",
     ),
-    pytest.param( # BTC.b
-        "0x152b9d0FdC40C096757F570A51E494bd4b943E50", # token
-        "0x8ffDf2DE812095b1D19CB146E4c004587C0A0692", # aToken
-        "0x89a415b3D20098E6A6C8f7a59001C67BD3129821", # qiToken
+    # pytest.param( # BTC.b
+    #     "0x152b9d0FdC40C096757F570A51E494bd4b943E50", # token
+    #     "0x8ffDf2DE812095b1D19CB146E4c004587C0A0692", # aToken
+    #     "0x89a415b3D20098E6A6C8f7a59001C67BD3129821", # qiToken
+    #     "", # iToken
+    #     ['Aave'], #, 'Benqi'],
+    #     "0x8ffdf2de812095b1d19cb146e4c004587c0a0692", # whale
+    #     1000000, # amount
+    #     id="BTCb Generic Lender",
+    # ),
+    pytest.param( # USDT
+        "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7", # token
+        "", # aToken
+        "0xd8fcDa6ec4Bdc547C0827B8804e89aCd817d56EF", # qiToken
         "", # iToken
-        ['Aave', 'Benqi'],
-        "0x8ffdf2de812095b1d19cb146e4c004587c0a0692", # whale
+        ['Benqi'],
+        "0x6ab707Aca953eDAeFBc4fD23bA73294241490620", # whale
         1000000, # amount
-        id="BTCb Generic Lender",
+        id="USDT Generic Lender",
     )
 ]
 

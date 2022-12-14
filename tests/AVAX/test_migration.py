@@ -129,9 +129,11 @@ def test_migrated_strategy_can_call_harvest(
 
     # hero-borg: the first harvest deploys the want but returns 0 profit, the second harvest reports the profit
     strategy.harvest({"from": gov})
+    chain.mine(10)
+    chain.sleep(10)
     strategy.harvest({"from": gov})
 
-    assert vault.strategies(strategy).dict()["totalGain"] >= 10 ** token.decimals()
+    assert vault.strategies(strategy).dict()["totalGain"] >= 10 ** token.decimals() - 1 # the "-1" accounts for rounding errors for compound withdrawals
 
     # But after migrated it cannot be added back
     vault.updateStrategyDebtRatio(new_strategy, 5_000, {"from": gov})

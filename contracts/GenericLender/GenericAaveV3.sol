@@ -584,12 +584,7 @@ contract GenericAaveV3 is GenericLenderBase {
         }
     }
 
-    function protectedTokens() internal view override returns (address[] memory) {
-        address[] memory protected = new address[](2);
-        protected[0] = address(want);
-        protected[1] = address(aToken);
-        return protected;
-    }
+    function protectedTokens() internal view override returns (address[] memory) {}
 
     modifier keepers() {
         require(

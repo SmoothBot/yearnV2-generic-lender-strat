@@ -6,18 +6,32 @@ import brownie
 import pytest
 import conftest as config
 
-
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_up_down_aave(strategyAddAAVE, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
-    if 'AAVE' not in lenders:
+def test_up_down_aave(strategyAddAave, aToken, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
+    if 'Aave' not in lenders:
         pytest.skip()
     run_up_down_test(None, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
 
+""""
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_up_down_hnd(strategyAddHND, lenders, hToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
-    if 'HND' not in lenders:
+def test_up_down_benqi(strategyAddBenqi, qiToken, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
+    if 'Benqi' not in lenders:
         pytest.skip()
-    run_up_down_test(hToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
+    # sAavax doesn't like us to call mint(0), so we don't do that
+    if(token.symbol() == 'sAVAX'):
+        qiToken = None
+    run_up_down_test(qiToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_up_down_IB(strategyAddIB, iToken, lenders, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount):
+    if 'IB' not in lenders:
+        pytest.skip()
+    # sAavax doesn't like us to call mint(0), so we don't do that
+    if(token.symbol() == 'sAVAX'):
+        qiToken = None
+    run_up_down_test(iToken, token, chain, whale, vault, strategy, strategist, accounts, decimals, amount)
+"""
+
 
 def run_up_down_test(
     cToken,
@@ -32,7 +46,6 @@ def run_up_down_test(
     amount
 ):
     assert strategy.numLenders() == 1
-    token = token
     gov = accounts.at(vault.governance(), force=True)
     lender = interface.IGenericLender(strategy.lenders(0))
 
@@ -48,11 +61,11 @@ def run_up_down_test(
 
     deposit_limit = 1_000_000_000 * (10 ** (decimals))
     debt_ratio = 10000
-    
+
     vault.addStrategy(strategy, debt_ratio, 0, 2 ** 256 - 1, 500, {"from": gov})
     vault.setDepositLimit(deposit_limit, {"from": gov})
     assert deposit_limit == vault.depositLimit()
- 
+
     whale_deposit = amount
     vault.deposit(whale_deposit, {"from": whale})
 
@@ -61,8 +74,6 @@ def run_up_down_test(
     strategy.harvest({"from": strategist})
     assert pytest.approx(strategy.estimatedTotalAssets(), rel=1e-5) == whale_deposit
 
-    # assert False
-   
     status = strategy.lendStatuses()
     form = "{:.2%}"
     formS = "{:,.0f}"
@@ -72,11 +83,13 @@ def run_up_down_test(
         )
     chain.sleep(20)
     chain.mine(20)
+
     if (cToken is not None):
-        cToken.mint(0, {"from": strategist})
+          cToken.mint(0, {"from": strategist})
 
     # Set debt ratio to zero to clear out the strategy
     vault.updateStrategyDebtRatio(strategy, 0, {"from": gov})
+    print(strategy.lendStatuses())
     strategy.harvest({"from": strategist})
     assert strategy.estimatedTotalAssets() / vault.totalAssets() < 1e-5
     print(lender.hasAssets())
@@ -86,7 +99,7 @@ def run_up_down_test(
     chain.mine(20)
     chain.sleep(20)
     strategy.harvest({"from": strategist})
-    
+
     print(lender.hasAssets())
     chain.mine(20)
     if (cToken is not None):

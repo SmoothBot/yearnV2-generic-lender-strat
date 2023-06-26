@@ -12,15 +12,22 @@ def test_good_migration_all(
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_good_migration_aave(
-    token, strategy, strategyAddAAVE, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
+    token, strategy, strategyAddAave, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
 ):
     run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_good_migration_hnd(
-    token, strategy, strategyAddHND, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
+def test_good_migration_benqi(
+    token, strategy, strategyAddBenqi, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
 ):
     run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
+
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_good_migration_ib(
+    token, strategy, strategyAddIB, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
+):
+    run_good_migration_test(token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain)
+
 
 def run_good_migration_test(
     token, strategy, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain
@@ -96,7 +103,7 @@ def test_bad_migration(
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
 def test_migrated_strategy_can_call_harvest(
-    token, strategy, strategyAllLenders, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain, lenders
+    token, strategy, strategyAllLenders, vault, gov, strategist, guardian, whale, amount, TestStrategy, rando, chain, lenders, aToken, qiToken
 ):
     # add strat and deploy capital to vault
     token.approve(vault, 2 ** 256 - 1, {"from": whale})
@@ -118,12 +125,15 @@ def test_migrated_strategy_can_call_harvest(
     chain.sleep(10)
 
     for i in range(strategy.numLenders()):
-        interface.IGenericLenderExt(strategy.lenders(i)).setDust(0, {'from':strategist})
-    
+        interface.IGenericLenderExt(strategy.lenders(i)).setDustThreshold(0, {'from':strategist})
+
+    # hero-borg: the first harvest deploys the want but returns 0 profit, the second harvest reports the profit
     strategy.harvest({"from": gov})
-    chain.mine(10)
-    chain.sleep(10)
+    # safetyBot : get error if try to harvest on same block 
+    chain.mine(1)
+    chain.sleep(1)
     strategy.harvest({"from": gov})
+
     assert vault.strategies(strategy).dict()["totalGain"] >= 10 ** token.decimals()
 
     # But after migrated it cannot be added back

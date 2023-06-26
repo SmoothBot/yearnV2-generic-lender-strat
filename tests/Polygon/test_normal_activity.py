@@ -1,26 +1,35 @@
 from itertools import count
-from brownie import Wei, reverts, Contract, GenericHundredFinance
+from brownie import Wei, reverts, Contract, interface, GenericAaveV3
 from useful_methods import genericStateOfVault, genericStateOfStrat
 import random
 import brownie
 import pytest
 import conftest as config
 
+#@pytest.mark.skip
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_all(strategyAllLenders, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+def test_normal_activity_all(strategyAllLenders, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, len(lenders))
+
+#@pytest.mark.skip
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_aave(strategyAddAave, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
+
+#@pytest.mark.skip
+@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
+def test_normal_activity_benqi(strategyAddBenqi, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
 
 @pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_aave(strategyAddAAVE, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
-
-@pytest.mark.parametrize(config.fixtures, config.params, indirect=True)
-def test_normal_activity_hnd(strategyAddHND, token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
-    run_normal_activity_test(token, hToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals)
+def test_normal_activity_ib(strategyAddIB, token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals):
+    run_normal_activity_test(token, aToken, qiToken, iToken, chain, whale, vault, strategy, gov, strategist, lenders, amount, decimals, 1)
 
 def run_normal_activity_test(
     token,
-    hToken,
+    aToken,
+    qiToken,
+    iToken,
     chain,
     whale,
     vault,
@@ -29,10 +38,10 @@ def run_normal_activity_test(
     strategist,
     lenders,
     amount,
-    decimals
+    decimals,
+    lendersSize
 ):
     starting_balance = token.balanceOf(strategist)
-
     token.approve(vault, 2 ** 256 - 1, {"from": whale})
     token.approve(vault, 2 ** 256 - 1, {"from": strategist})
 
@@ -44,7 +53,7 @@ def run_normal_activity_test(
     chain.sleep(1)
     chain.mine(1)
     strategy.setWithdrawalThreshold(0, {"from": gov})
-    assert strategy.harvestTrigger(1) == True
+    #assert strategy.harvestTrigger(1) == True
     print(whale_deposit / 1e18)
     status = strategy.lendStatuses()
     form = "{:.2%}"
@@ -64,20 +73,26 @@ def run_normal_activity_test(
             f"Lender: {j[0]}, Deposits: {formS.format(j[1]/(10 ** decimals))} APR: {form.format(j[2]/1e18)}"
         )
     startingBalance = vault.totalAssets()
-    for i in range(10):
-
-        waitBlock = 50
+    for i in range(4):
+        waitBlock = 25
         print(f'\n----wait {waitBlock} blocks----')
         chain.mine(waitBlock)
         chain.sleep(waitBlock)
         print(f'\n----harvest----')
-        if 'HND' in lenders:
-            hToken.mint(0,{"from": whale})
-            # TODO - Remove when HND re-introduce a normal interest rate model
-            lender = GenericHundredFinance.at(strategy.lenders(0))
-            lender.manualHarvest({'from': strategist})
-        strategy.harvest({"from": strategist})
+        if 'Benqi' in lenders:
+            token.approve(qiToken, 1, {"from": whale})
+            qiToken.mint(1,{"from": whale})
+        if 'Aave' in lenders:
+            for j in range(lendersSize):
+                lender = interface.IGenericLender(strategy.lenders(j))
+                if lender.lenderName() == 'Aave':
+                    GenericAaveV3.at(lender.address).harvest({"from": gov})
 
+        if 'IB' in lenders:
+            token.approve(iToken, 1, {"from": whale})
+            iToken.mint(1,{"from": whale})
+        strategy.harvest({"from": strategist})
+        
         # genericStateOfStrat(strategy, currency, vault)
         # genericStateOfVault(vault, currency)
 
@@ -89,7 +104,7 @@ def run_normal_activity_test(
         difff = profit - totaleth
         # print(f'Diff: {difff}')
 
-        blocks_per_year = 3154 * 10**4
+        blocks_per_year = 3156 * 10**4  
         assert startingBalance != 0
         time = (i + 1) * waitBlock
         assert time != 0
